@@ -5,11 +5,12 @@ A small, native-feeling script editor for Omarchy, written with Qt 6 and Qt Quic
 ## What it does
 
 - Opens and safely saves UTF-8 text files.
-- Provides New, Open, and Save actions plus standard keyboard shortcuts.
+- Provides New, Open, Save, line numbers, and find/replace (`Ctrl+F`).
+- Highlights common shell, Python, Lua, and JavaScript-like comments, strings, numbers, and keywords.
 - Uses the active Omarchy palette from `~/.local/state/omarchy/current/theme/colors.toml`.
 - Watches the palette and updates its UI after `omarchy theme set …`.
 
-Syntax highlighting, line numbers, tabs, and find/replace are intentionally the next milestone; this first cut establishes the application and theming foundation.
+Tabs are the next milestone; this application already has the essential single-document editing workflow.
 
 ## Build and run
 

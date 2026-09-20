@@ -14,6 +14,8 @@ qt_add_executable(qomaedit
     src/theme.h
     src/document.cpp
     src/document.h
+    src/syntaxhighlighter.cpp
+    src/syntaxhighlighter.h
 )
 
 qt_add_qml_module(qomaedit
