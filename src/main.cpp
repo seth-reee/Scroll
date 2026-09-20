@@ -3,12 +3,13 @@
 #include "syntaxhighlighter.h"
 #include "theme.h"
 
-#include <QGuiApplication>
+#include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 
 int main(int argc, char *argv[]) {
-    QGuiApplication app(argc, argv);
+    // QApplication supplies the platform file-dialog backend used on Linux.
+    QApplication app(argc, argv);
     app.setOrganizationName("Qomaedit");
     app.setApplicationName("Qomaedit");
 
