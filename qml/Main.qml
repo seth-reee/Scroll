@@ -8,7 +8,7 @@ ApplicationWindow {
     width: 1080
     height: 720
     visible: true
-    title: (document.modified ? "● " : "") + document.fileName + " — Qomaedit"
+    title: (document.modified ? "● " : "") + document.fileName + " — qOmaedit"
     color: omarchyTheme.background
     property bool lineWrapping: false
     property int pendingCloseTab: -1
@@ -111,7 +111,7 @@ ApplicationWindow {
             background: Rectangle { color: omarchyTheme.panel }
             RowLayout {
                 anchors.fill: parent; anchors.leftMargin: 16; anchors.rightMargin: 16; spacing: 8
-                Label { text: "Qomaedit"; color: omarchyTheme.foreground; font.bold: true; font.pixelSize: 16 }
+                Label { text: "qOmaedit"; color: omarchyTheme.foreground; font.bold: true; font.pixelSize: 16 }
                 Label { text: " / " + document.fileName; color: omarchyTheme.mutedForeground; Layout.fillWidth: true }
                 ToolButton {
                     id: menuButton
@@ -173,7 +173,7 @@ ApplicationWindow {
         MenuItem { text: "Save"; onTriggered: window.saveDocument() }
         MenuItem { text: "Find and replace…"; onTriggered: findDialog.open() }
         MenuSeparator {}
-        MenuItem { text: "About Qomaedit"; onTriggered: aboutDialog.open() }
+        MenuItem { text: "About qOmaedit"; onTriggered: aboutDialog.open() }
     }
 
     Rectangle {
@@ -327,14 +327,14 @@ ApplicationWindow {
 
     Dialog {
         id: aboutDialog
-        title: "About Qomaedit"
+        title: "About qOmaedit"
         modal: true
         standardButtons: Dialog.Close
         width: 380
         background: Rectangle { color: omarchyTheme.panel; border.color: omarchyTheme.surface; radius: 8 }
         ColumnLayout {
             width: parent.width; spacing: 8
-            Label { text: "Qomaedit"; color: omarchyTheme.foreground; font.bold: true; font.pixelSize: 20 }
+            Label { text: "qOmaedit"; color: omarchyTheme.foreground; font.bold: true; font.pixelSize: 20 }
             Label { text: "Version " + applicationVersion; color: omarchyTheme.mutedForeground }
             Text {
                 text: "<a href=\"https://github.com/seth-reee/Qomaedit\">github.com/seth-reee/Qomaedit</a>"

@@ -11,8 +11,8 @@
 int main(int argc, char *argv[]) {
     // QApplication supplies the platform file-dialog backend used on Linux.
     QApplication app(argc, argv);
-    app.setOrganizationName("Qomaedit");
-    app.setApplicationName("Qomaedit");
+    app.setOrganizationName("qOmaedit");
+    app.setApplicationName("qOmaedit");
     app.setApplicationVersion(QOMAEDIT_VERSION);
 
     Theme theme;

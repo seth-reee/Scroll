@@ -1,6 +1,6 @@
-# Qomaedit
+# qOmaedit
 
-Qomaedit is a small Qt 6 / Qt Quick text editor for scripts and other plain-text files on Omarchy. It is deliberately focused: fast startup, familiar editor basics, and a UI that silently follows the active desktop theme.
+qOmaedit is a small Qt 6 / Qt Quick text editor for scripts and other plain-text files on Omarchy. It is deliberately focused: fast startup, familiar editor basics, and a UI that silently follows the active desktop theme.
 
 ## Features
 
@@ -16,7 +16,7 @@ Qomaedit is a small Qt 6 / Qt Quick text editor for scripts and other plain-text
 - Optional visual guides before wrapped continuation lines, controlled in Settings and never written to the file.
 - Mouse-wheel scrolling and draggable vertical/horizontal scrollbars. The horizontal bar hides while wrapping is on.
 - Lightweight highlighting for common shell, Python, Lua, and JavaScript-like comments, strings, numbers, and keywords.
-- Live Omarchy palette support. Qomaedit reads `~/.local/state/omarchy/current/theme/colors.toml` and updates its colors after a theme switch without displaying the theme name.
+- Live Omarchy palette support. qOmaedit reads `~/.local/state/omarchy/current/theme/colors.toml` and updates its colors after a theme switch without displaying the theme name.
 
 ## Build and run
 
@@ -38,16 +38,16 @@ The build output is intentionally ignored by Git. If `build/` does not exist, re
 
 ## Current scope
 
-Qomaedit supports multiple open documents through its tab bar. Richer language-specific highlighting and editor features are natural future additions.
+qOmaedit supports multiple open documents through its tab bar. Richer language-specific highlighting and editor features are natural future additions.
 
 ## License
 
-Qomaedit is licensed under the MIT License.
+qOmaedit is licensed under the MIT License.
 
-You are free to use, modify, distribute, and use Qomaedit commercially, provided that the original copyright and license notices are preserved.
+You are free to use, modify, distribute, and use qOmaedit commercially, provided that the original copyright and license notices are preserved.
 
 See [LICENSE](LICENSE) for details.
 
 ## Contributing
 
-Contributions are welcome. If you improve Qomaedit and would like to help the project, please open a pull request upstream. You are not required to publish or contribute your modifications; the MIT License only requires that copyright and license notices are preserved.
+Contributions are welcome. If you improve qOmaedit and would like to help the project, please open a pull request upstream. You are not required to publish or contribute your modifications; the MIT License only requires that copyright and license notices are preserved.

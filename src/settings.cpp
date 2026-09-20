@@ -4,9 +4,13 @@
 
 Settings::Settings(QObject *parent) : QObject(parent) {
     QSettings values;
-    m_tabsEnabled = values.value("editor/tabsEnabled", true).toBool();
-    m_syntaxEnabled = values.value("editor/syntaxEnabled", true).toBool();
-    m_wrappedLineSpacing = values.value("editor/wrappedLineSpacing", false).toBool();
+    const QSettings legacy("Qomaedit", "Qomaedit");
+    const auto setting = [&values, &legacy](const QString &key, const QVariant &fallback) {
+        return values.contains(key) ? values.value(key) : legacy.value(key, fallback);
+    };
+    m_tabsEnabled = setting("editor/tabsEnabled", true).toBool();
+    m_syntaxEnabled = setting("editor/syntaxEnabled", true).toBool();
+    m_wrappedLineSpacing = setting("editor/wrappedLineSpacing", false).toBool();
 }
 
 void Settings::setTabsEnabled(bool enabled) {
