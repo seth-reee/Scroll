@@ -237,6 +237,20 @@ ApplicationWindow {
                 }
             }
         }
+
+        // Breeze positions attached bars independently, so cover their shared corner
+        // with the same neutral block a conventional scroll viewport uses.
+        Rectangle {
+            z: 3
+            width: verticalScrollBar.width
+            height: horizontalScrollBar.height
+            anchors.right: parent.right
+            anchors.rightMargin: 12
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 12
+            visible: verticalScrollBar.visible && horizontalScrollBar.visible
+            color: omarchyTheme.panel
+        }
     }
 
     footer: Rectangle {
