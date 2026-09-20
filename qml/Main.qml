@@ -164,10 +164,10 @@ ApplicationWindow {
 
     Menu {
         id: applicationMenu
-        MenuItem { text: "New"; shortcut: StandardKey.New; onTriggered: document.newFile() }
-        MenuItem { text: "Open…"; shortcut: StandardKey.Open; onTriggered: openDialog.open() }
-        MenuItem { text: "Save"; shortcut: StandardKey.Save; onTriggered: window.saveDocument() }
-        MenuItem { text: "Find and replace…"; shortcut: StandardKey.Find; onTriggered: findDialog.open() }
+        MenuItem { text: "New"; onTriggered: document.newFile() }
+        MenuItem { text: "Open…"; onTriggered: openDialog.open() }
+        MenuItem { text: "Save"; onTriggered: window.saveDocument() }
+        MenuItem { text: "Find and replace…"; onTriggered: findDialog.open() }
         MenuSeparator {}
         MenuItem { text: "About Qomaedit"; onTriggered: aboutDialog.open() }
     }
