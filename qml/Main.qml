@@ -196,12 +196,16 @@ ApplicationWindow {
             contentWidth: editor.width
             contentHeight: editor.height
             ScrollBar.vertical: ScrollBar {
+                id: verticalScrollBar
                 policy: ScrollBar.AsNeeded
                 interactive: true
+                height: editorScroll.height - (horizontalScrollBar.visible ? horizontalScrollBar.height : 0)
             }
             ScrollBar.horizontal: ScrollBar {
+                id: horizontalScrollBar
                 policy: window.lineWrapping ? ScrollBar.AlwaysOff : ScrollBar.AsNeeded
                 interactive: true
+                width: editorScroll.width - (verticalScrollBar.visible ? verticalScrollBar.width : 0)
             }
 
             TextArea {
