@@ -38,6 +38,7 @@ ApplicationWindow {
 
     function toggleLineWrapping() {
         lineWrapping = !lineWrapping
+        syntaxHighlighter.setExtraLineSpacingEnabled(lineWrapping && settings.wrappedLineSpacing)
         refreshEditorLayout()
     }
 
@@ -231,20 +232,11 @@ ApplicationWindow {
                 // It also wraps long unbroken script lines, unlike WordWrap.
                 wrapMode: window.lineWrapping ? TextEdit.WrapAnywhere : TextEdit.NoWrap
                 background: Rectangle { color: "transparent" }
-                Binding {
-                    target: editor.contentItem
-                    property: "lineHeightMode"
-                    value: TextEdit.ProportionalHeight
-                }
-                Binding {
-                    target: editor.contentItem
-                    property: "lineHeight"
-                    value: window.lineWrapping && settings.wrappedLineSpacing ? 1.6 : 1.0
-                }
                 focus: true
                 Component.onCompleted: {
                     syntaxHighlighter.setEditorDocument(textDocument)
                     syntaxHighlighter.setEnabled(settings.syntaxEnabled)
+                    syntaxHighlighter.setExtraLineSpacingEnabled(window.lineWrapping && settings.wrappedLineSpacing)
                     lineNumberModel.setEditorDocument(textDocument)
                     lineNumberModel.scheduleRefresh()
                 }
@@ -285,7 +277,11 @@ ApplicationWindow {
     Connections {
         target: settings
         function onSyntaxEnabledChanged() { syntaxHighlighter.setEnabled(settings.syntaxEnabled) }
-        function onWrappedLineSpacingChanged() { window.refreshEditorLayout(); lineNumberModel.scheduleRefresh() }
+        function onWrappedLineSpacingChanged() {
+            syntaxHighlighter.setExtraLineSpacingEnabled(window.lineWrapping && settings.wrappedLineSpacing)
+            window.refreshEditorLayout()
+            lineNumberModel.scheduleRefresh()
+        }
     }
 
     Dialog {

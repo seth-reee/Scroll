@@ -3,6 +3,9 @@
 
 #include <QQuickTextDocument>
 #include <QRegularExpression>
+#include <QTextBlock>
+#include <QTextBlockFormat>
+#include <QTextCursor>
 #include <QTextDocument>
 
 SyntaxHighlighter::SyntaxHighlighter(Theme *theme, QObject *parent)
@@ -12,6 +15,7 @@ SyntaxHighlighter::SyntaxHighlighter(Theme *theme, QObject *parent)
 
 void SyntaxHighlighter::setEditorDocument(QQuickTextDocument *document) {
     setDocument(document ? document->textDocument() : nullptr);
+    applyLineSpacing();
 }
 
 void SyntaxHighlighter::setEnabled(bool enabled) {
@@ -19,6 +23,25 @@ void SyntaxHighlighter::setEnabled(bool enabled) {
     m_enabled = enabled;
     rehighlight();
     emit enabledChanged();
+}
+
+void SyntaxHighlighter::setExtraLineSpacingEnabled(bool enabled) {
+    if (m_extraLineSpacing == enabled) return;
+    m_extraLineSpacing = enabled;
+    applyLineSpacing();
+}
+
+void SyntaxHighlighter::applyLineSpacing() {
+    if (!document()) return;
+    QTextCursor edit(document());
+    edit.beginEditBlock();
+    for (QTextBlock block = document()->begin(); block.isValid(); block = block.next()) {
+        QTextCursor cursor(block);
+        QTextBlockFormat format = block.blockFormat();
+        format.setLineHeight(m_extraLineSpacing ? 160 : 100, QTextBlockFormat::ProportionalHeight);
+        cursor.setBlockFormat(format);
+    }
+    edit.endEditBlock();
 }
 
 void SyntaxHighlighter::highlightBlock(const QString &text) {
