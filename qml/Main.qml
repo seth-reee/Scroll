@@ -108,6 +108,14 @@ ApplicationWindow {
             // It also wraps long unbroken script lines, unlike WordWrap.
             wrapMode: window.lineWrapping ? TextEdit.WrapAnywhere : TextEdit.NoWrap
             background: Rectangle { color: "transparent" }
+            ScrollBar.vertical: ScrollBar {
+                policy: ScrollBar.AsNeeded
+                interactive: true
+            }
+            ScrollBar.horizontal: ScrollBar {
+                policy: window.lineWrapping ? ScrollBar.AlwaysOff : ScrollBar.AsNeeded
+                interactive: true
+            }
             focus: true
             Component.onCompleted: syntaxHighlighter.setEditorDocument(textDocument)
         }
