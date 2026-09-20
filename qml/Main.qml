@@ -35,6 +35,14 @@ ApplicationWindow {
         findNext()
     }
 
+    function logicalLineAt(visualLine) {
+        const item = editor.contentItem
+        if (!item || !item.positionAt || editor.lineCount === 0) return visualLine + 1
+        const visualHeight = item.contentHeight / editor.lineCount
+        const position = item.positionAt(0, (visualLine + 0.5) * visualHeight)
+        return editor.text.slice(0, Math.max(0, position)).split("\n").length
+    }
+
     FileDialog { id: openDialog; title: "Open script"; onAccepted: document.open(selectedFile) }
     FileDialog { id: saveDialog; title: "Save script"; fileMode: FileDialog.SaveFile; onAccepted: document.saveAs(selectedFile) }
 
@@ -75,8 +83,12 @@ ApplicationWindow {
                     model: editor.lineCount
                     Label {
                         required property int index
+                        readonly property int logicalLine: window.logicalLineAt(index)
+                        readonly property int previousLogicalLine: index > 0 ? window.logicalLineAt(index - 1) : 0
                         width: gutter.width - 10; height: editor.font.pixelSize * 1.45
-                        text: index + 1; horizontalAlignment: Text.AlignRight
+                        // Wrapped visual rows deliberately have no number: one physical line, one number.
+                        text: index === 0 || logicalLine !== previousLogicalLine ? logicalLine : ""
+                        horizontalAlignment: Text.AlignRight
                         color: omarchyTheme.mutedForeground; font: editor.font
                     }
                 }
@@ -104,7 +116,7 @@ ApplicationWindow {
         RowLayout { anchors.fill: parent; anchors.leftMargin: 16; anchors.rightMargin: 16
             Label { text: omarchyTheme.name; color: omarchyTheme.accent; font.pixelSize: 12 }
             Item { Layout.fillWidth: true }
-            Label { text: editor.cursorPosition + " chars"; color: omarchyTheme.mutedForeground; font.pixelSize: 12 }
+            Label { text: document.text.split("\n").length + " lines · " + editor.cursorPosition + " chars"; color: omarchyTheme.mutedForeground; font.pixelSize: 12 }
             Button {
                 text: window.lineWrapping ? "Wrap: On" : "Wrap: Off"
                 onClicked: window.lineWrapping = !window.lineWrapping
