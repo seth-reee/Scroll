@@ -69,9 +69,13 @@ void Document::newFile() {
     notifyCurrent();
 }
 
-void Document::closeTab(int index) {
-    if (index < 0 || index >= m_tabs.size()) return;
-    if (m_tabs[index].modified) { emit error(QStringLiteral("Save or discard changes before closing this tab.")); return; }
+bool Document::tabModified(int index) const {
+    return index >= 0 && index < m_tabs.size() && m_tabs[index].modified;
+}
+
+bool Document::closeTab(int index, bool discard) {
+    if (index < 0 || index >= m_tabs.size()) return false;
+    if (m_tabs[index].modified && !discard) return false;
     if (m_tabs.size() == 1) { m_tabs[0] = {}; m_currentIndex = 0; }
     else {
         m_tabs.removeAt(index);
@@ -79,6 +83,7 @@ void Document::closeTab(int index) {
         else if (index < m_currentIndex) --m_currentIndex;
     }
     notifyCurrent();
+    return true;
 }
 
 QString Document::displayName(const State &state) {

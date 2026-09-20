@@ -30,7 +30,8 @@ public:
     Q_INVOKABLE bool save();
     Q_INVOKABLE bool saveAs(const QUrl &url);
     Q_INVOKABLE void newFile();
-    Q_INVOKABLE void closeTab(int index);
+    Q_INVOKABLE bool tabModified(int index) const;
+    Q_INVOKABLE bool closeTab(int index, bool discard = false);
 
 signals:
     void textChanged();

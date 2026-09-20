@@ -11,6 +11,7 @@ ApplicationWindow {
     title: (document.modified ? "● " : "") + document.fileName + " — Qomaedit"
     color: omarchyTheme.background
     property bool lineWrapping: false
+    property int pendingCloseTab: -1
 
     function saveDocument() {
         if (document.fileName === "Untitled") saveDialog.open()
@@ -53,6 +54,27 @@ ApplicationWindow {
         })
     }
 
+    function requestCloseTab(index) {
+        if (document.tabModified(index)) {
+            closeTabDialog.tabIndex = index
+            closeTabDialog.open()
+        } else {
+            document.closeTab(index, true)
+        }
+    }
+
+    function saveAndCloseTab(index) {
+        document.currentIndex = index
+        if (document.fileName === "Untitled") {
+            pendingCloseTab = index
+            closeTabDialog.close()
+            saveDialog.open()
+        } else if (document.save()) {
+            document.closeTab(index, true)
+            closeTabDialog.close()
+        }
+    }
+
     // Platform dialogs delegate to the system file picker rather than drawing a QML dialog.
     Platform.FileDialog {
         id: openDialog
@@ -67,7 +89,14 @@ ApplicationWindow {
         fileMode: Platform.FileDialog.SaveFile
         defaultSuffix: "txt"
         nameFilters: ["Text files (*.txt)", "All files (*)"]
-        onAccepted: document.saveAs(file)
+        onAccepted: {
+            document.saveAs(file)
+            if (window.pendingCloseTab >= 0) {
+                document.closeTab(window.pendingCloseTab, true)
+                window.pendingCloseTab = -1
+            }
+        }
+        onRejected: window.pendingCloseTab = -1
     }
 
     header: Column {
@@ -101,7 +130,7 @@ ApplicationWindow {
                     required property int index
                     text: (modelData.modified ? "● " : "") + modelData.title
                     onClicked: document.currentIndex = index
-                    rightPadding: closeButton.width + 8
+                    rightPadding: closeButton.width + 18
                     ToolButton {
                         id: closeButton
                         text: "×"
@@ -109,7 +138,7 @@ ApplicationWindow {
                         anchors.right: parent.right
                         anchors.rightMargin: 2
                         anchors.verticalCenter: parent.verticalCenter
-                        onClicked: document.closeTab(tabButton.index)
+                        onClicked: window.requestCloseTab(tabButton.index)
                         ToolTip.visible: hovered
                         ToolTip.text: "Close tab"
                     }
@@ -226,6 +255,33 @@ ApplicationWindow {
             Label {
                 text: "Disabling syntax highlighting also hides the detected-language label."
                 color: omarchyTheme.mutedForeground; wrapMode: Text.Wrap; Layout.fillWidth: true
+            }
+        }
+    }
+
+    Dialog {
+        id: closeTabDialog
+        property int tabIndex: -1
+        title: "Unsaved changes"
+        modal: true
+        standardButtons: Dialog.NoButton
+        width: 380
+        background: Rectangle { color: omarchyTheme.panel; border.color: omarchyTheme.surface; radius: 8 }
+        ColumnLayout {
+            width: parent.width; spacing: 12
+            Label {
+                text: "This tab has unsaved changes."
+                color: omarchyTheme.foreground; wrapMode: Text.Wrap; Layout.fillWidth: true
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Button { text: "Cancel"; onClicked: closeTabDialog.close() }
+                Item { Layout.fillWidth: true }
+                Button {
+                    text: "Discard"
+                    onClicked: { document.closeTab(closeTabDialog.tabIndex, true); closeTabDialog.close() }
+                }
+                Button { text: "Save"; onClicked: window.saveAndCloseTab(closeTabDialog.tabIndex) }
             }
         }
     }
