@@ -97,6 +97,7 @@ ApplicationWindow {
                 model: document.tabs
                 TabButton {
                     required property var modelData
+                    required property int index
                     text: (modelData.modified ? "● " : "") + modelData.title
                     onClicked: document.currentIndex = index
                 }
@@ -123,7 +124,7 @@ ApplicationWindow {
             Repeater {
                 model: lineNumberModel
                 Label {
-                    x: 0; y: 12 + model.lineTop - editorScroll.contentItem.contentY
+                    x: 0; y: 12 + model.lineTop - editorScroll.contentY
                     width: gutter.width - 10; height: model.lineHeight
                     // Wrapped visual rows deliberately have no number: one physical line, one number.
                     text: model.number === 0 ? "" : model.number
@@ -134,9 +135,14 @@ ApplicationWindow {
             }
         }
 
-        ScrollView {
+        Flickable {
             id: editorScroll
             anchors.fill: parent; anchors.leftMargin: gutter.width + 12; anchors.rightMargin: 12; anchors.topMargin: 12; anchors.bottomMargin: 12
+            clip: true
+            interactive: true
+            flickableDirection: Flickable.AutoFlickIfNeeded
+            contentWidth: editor.width
+            contentHeight: editor.height
             ScrollBar.vertical: ScrollBar {
                 policy: ScrollBar.AsNeeded
                 interactive: true
@@ -148,9 +154,9 @@ ApplicationWindow {
 
             TextArea {
                 id: editor
-                // ScrollView owns the viewport; TextArea grows to its content inside it.
-                width: window.lineWrapping ? editorScroll.availableWidth : Math.max(editorScroll.availableWidth, implicitWidth)
-                height: Math.max(editorScroll.availableHeight, implicitHeight)
+                // Flickable owns the viewport; TextArea grows to its content inside it.
+                width: window.lineWrapping ? editorScroll.width : Math.max(editorScroll.width, implicitWidth)
+                height: Math.max(editorScroll.height, implicitHeight)
                 text: document.text
                 onTextChanged: {
                     if (activeFocus && text !== document.text) document.text = text
