@@ -149,7 +149,6 @@ ApplicationWindow {
     footer: Rectangle {
         height: 30; color: omarchyTheme.panel
         RowLayout { anchors.fill: parent; anchors.leftMargin: 16; anchors.rightMargin: 16
-            Label { text: omarchyTheme.name; color: omarchyTheme.accent; font.pixelSize: 12 }
             Item { Layout.fillWidth: true }
             Label { text: document.text.split("\n").length + " lines · " + editor.cursorPosition + " chars"; color: omarchyTheme.mutedForeground; font.pixelSize: 12 }
             Button {

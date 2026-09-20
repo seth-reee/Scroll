@@ -8,7 +8,7 @@ A small, native-feeling script editor for Omarchy, written with Qt 6 and Qt Quic
 - Provides New, Open, Save, working mouse-wheel scrollbars, line numbers, a visual-only footer line-wrap toggle, and find/replace (`Ctrl+F`).
 - Highlights common shell, Python, Lua, and JavaScript-like comments, strings, numbers, and keywords.
 - Uses the active Omarchy palette from `~/.local/state/omarchy/current/theme/colors.toml`.
-- Watches the palette and updates its UI after `omarchy theme set …`.
+- Watches the palette and updates its UI silently after `omarchy theme set …`.
 
 Tabs are the next milestone; this application already has the essential single-document editing workflow.
 
