@@ -45,3 +45,7 @@ Qomaedit is licensed under the MIT License.
 You are free to use, modify, distribute, and use Qomaedit commercially, provided that the original copyright and license notices are preserved.
 
 See [LICENSE](LICENSE) for details.
+
+## Contributing
+
+Contributions are welcome. If you improve Qomaedit and would like to help the project, please open a pull request upstream. You are not required to publish or contribute your modifications; the MIT License only requires that copyright and license notices are preserved.
