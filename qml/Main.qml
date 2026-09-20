@@ -38,7 +38,6 @@ ApplicationWindow {
 
     function toggleLineWrapping() {
         lineWrapping = !lineWrapping
-        syntaxHighlighter.setExtraLineSpacingEnabled(lineWrapping && settings.wrappedLineSpacing)
         refreshEditorLayout()
     }
 
@@ -191,6 +190,21 @@ ApplicationWindow {
             }
         }
 
+        // Soft wraps have no newline in the document. This guide appears only before
+        // continuation rows, so it distinguishes them without adding real line spacing.
+        Repeater {
+            model: lineNumberModel
+            Rectangle {
+                visible: window.lineWrapping && settings.wrappedLineSpacing && model.number === 0
+                x: gutter.width + 12
+                y: 12 + model.lineTop - editorScroll.contentY
+                width: parent.width - x - 12
+                height: 2
+                color: omarchyTheme.surface
+                opacity: 0.9
+            }
+        }
+
         Flickable {
             id: editorScroll
             anchors.fill: parent; anchors.leftMargin: gutter.width + 12; anchors.rightMargin: 12; anchors.topMargin: 12; anchors.bottomMargin: 12
@@ -236,7 +250,6 @@ ApplicationWindow {
                 Component.onCompleted: {
                     syntaxHighlighter.setEditorDocument(textDocument)
                     syntaxHighlighter.setEnabled(settings.syntaxEnabled)
-                    syntaxHighlighter.setExtraLineSpacingEnabled(window.lineWrapping && settings.wrappedLineSpacing)
                     lineNumberModel.setEditorDocument(textDocument)
                     lineNumberModel.scheduleRefresh()
                 }
@@ -277,11 +290,7 @@ ApplicationWindow {
     Connections {
         target: settings
         function onSyntaxEnabledChanged() { syntaxHighlighter.setEnabled(settings.syntaxEnabled) }
-        function onWrappedLineSpacingChanged() {
-            syntaxHighlighter.setExtraLineSpacingEnabled(window.lineWrapping && settings.wrappedLineSpacing)
-            window.refreshEditorLayout()
-            lineNumberModel.scheduleRefresh()
-        }
+        function onWrappedLineSpacingChanged() { lineNumberModel.scheduleRefresh() }
     }
 
     Dialog {
@@ -294,7 +303,7 @@ ApplicationWindow {
             CheckBox { text: "Show tabs"; checked: settings.tabsEnabled; onToggled: settings.tabsEnabled = checked }
             CheckBox { text: "Syntax highlighting"; checked: settings.syntaxEnabled; onToggled: settings.syntaxEnabled = checked }
             CheckBox {
-                text: "Extra visual spacing for wrapped lines"
+                text: "Mark wrapped continuation lines"
                 checked: settings.wrappedLineSpacing
                 onToggled: settings.wrappedLineSpacing = checked
             }

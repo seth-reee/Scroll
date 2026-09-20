@@ -11,7 +11,7 @@ Qomaedit is a small Qt 6 / Qt Quick text editor for scripts and other plain-text
 - Find next, replace, and replace all.
 - Line-number gutter that keeps source-line numbers aligned when visual wrapping is enabled; wrapped continuation rows are left blank.
 - Footer `Wrap: On/Off` control. Wrapping is display-only: it never inserts newlines, so copied and saved text is unchanged.
-- Optional extra visual spacing for wrapped lines, controlled in Settings and never written to the file.
+- Optional visual guides before wrapped continuation lines, controlled in Settings and never written to the file.
 - Mouse-wheel scrolling and draggable vertical/horizontal scrollbars. The horizontal bar hides while wrapping is on.
 - Lightweight highlighting for common shell, Python, Lua, and JavaScript-like comments, strings, numbers, and keywords.
 - Live Omarchy palette support. Qomaedit reads `~/.local/state/omarchy/current/theme/colors.toml` and updates its colors after a theme switch without displaying the theme name.
