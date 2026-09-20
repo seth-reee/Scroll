@@ -95,7 +95,7 @@ ApplicationWindow {
             anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom
             anchors.margins: 1; width: 52; color: omarchyTheme.background; clip: true
             Column {
-                y: 12 - editor.contentY
+                y: 12 - editorScroll.contentItem.contentY
                 width: parent.width
                 Repeater {
                     model: editor.lineCount
@@ -113,19 +113,9 @@ ApplicationWindow {
             }
         }
 
-        TextArea {
-            id: editor
+        ScrollView {
+            id: editorScroll
             anchors.fill: parent; anchors.leftMargin: gutter.width + 12; anchors.rightMargin: 12; anchors.topMargin: 12; anchors.bottomMargin: 12
-            text: document.text
-            onTextChanged: if (activeFocus && text !== document.text) document.text = text
-            font.family: "monospace"; font.pixelSize: 15
-            color: omarchyTheme.foreground
-            selectionColor: omarchyTheme.selection
-            selectedTextColor: omarchyTheme.foreground
-            // WrapAnywhere is visual only: no newline is inserted into the document.
-            // It also wraps long unbroken script lines, unlike WordWrap.
-            wrapMode: window.lineWrapping ? TextEdit.WrapAnywhere : TextEdit.NoWrap
-            background: Rectangle { color: "transparent" }
             ScrollBar.vertical: ScrollBar {
                 policy: ScrollBar.AsNeeded
                 interactive: true
@@ -134,8 +124,25 @@ ApplicationWindow {
                 policy: window.lineWrapping ? ScrollBar.AlwaysOff : ScrollBar.AsNeeded
                 interactive: true
             }
-            focus: true
-            Component.onCompleted: syntaxHighlighter.setEditorDocument(textDocument)
+
+            TextArea {
+                id: editor
+                // ScrollView owns the viewport; TextArea grows to its content inside it.
+                width: window.lineWrapping ? editorScroll.availableWidth : Math.max(editorScroll.availableWidth, implicitWidth)
+                height: Math.max(editorScroll.availableHeight, implicitHeight)
+                text: document.text
+                onTextChanged: if (activeFocus && text !== document.text) document.text = text
+                font.family: "monospace"; font.pixelSize: 15
+                color: omarchyTheme.foreground
+                selectionColor: omarchyTheme.selection
+                selectedTextColor: omarchyTheme.foreground
+                // WrapAnywhere is visual only: no newline is inserted into the document.
+                // It also wraps long unbroken script lines, unlike WordWrap.
+                wrapMode: window.lineWrapping ? TextEdit.WrapAnywhere : TextEdit.NoWrap
+                background: Rectangle { color: "transparent" }
+                focus: true
+                Component.onCompleted: syntaxHighlighter.setEditorDocument(textDocument)
+            }
         }
     }
 
