@@ -14,6 +14,8 @@ qt_add_executable(qomaedit
     src/theme.h
     src/document.cpp
     src/document.h
+    src/linenumbermodel.cpp
+    src/linenumbermodel.h
     src/syntaxhighlighter.cpp
     src/syntaxhighlighter.h
 )

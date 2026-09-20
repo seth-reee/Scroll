@@ -35,14 +35,6 @@ ApplicationWindow {
         findNext()
     }
 
-    function logicalLineAt(visualLine) {
-        const item = editor.contentItem
-        if (!item || !item.positionAt || editor.lineCount === 0) return visualLine + 1
-        const visualHeight = item.contentHeight / editor.lineCount
-        const position = item.positionAt(0, (visualLine + 0.5) * visualHeight)
-        return editor.text.slice(0, Math.max(0, position)).split("\n").length
-    }
-
     function toggleLineWrapping() {
         const cursor = editor.cursorPosition
         const selectionStart = editor.selectionStart
@@ -94,21 +86,19 @@ ApplicationWindow {
             id: gutter
             anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom
             anchors.margins: 1; width: 52; color: omarchyTheme.background; clip: true
-            Column {
-                y: 12 - editorScroll.contentItem.contentY
-                width: parent.width
-                Repeater {
-                    model: editor.lineCount
-                    Label {
-                        required property int index
-                        readonly property int logicalLine: window.logicalLineAt(index)
-                        readonly property int previousLogicalLine: index > 0 ? window.logicalLineAt(index - 1) : 0
-                        width: gutter.width - 10; height: editor.font.pixelSize * 1.45
-                        // Wrapped visual rows deliberately have no number: one physical line, one number.
-                        text: index === 0 || logicalLine !== previousLogicalLine ? logicalLine : ""
-                        horizontalAlignment: Text.AlignRight
-                        color: omarchyTheme.mutedForeground; font: editor.font
-                    }
+            Repeater {
+                model: lineNumberModel
+                Label {
+                    required property int number
+                    required property real top
+                    required property real lineHeight
+                    x: 0; y: 12 + top - editorScroll.contentItem.contentY
+                    width: gutter.width - 10; height: lineHeight
+                    // Wrapped visual rows deliberately have no number: one physical line, one number.
+                    text: number === 0 ? "" : number
+                    horizontalAlignment: Text.AlignRight
+                    verticalAlignment: Text.AlignTop
+                    color: omarchyTheme.mutedForeground; font: editor.font
                 }
             }
         }
@@ -131,7 +121,12 @@ ApplicationWindow {
                 width: window.lineWrapping ? editorScroll.availableWidth : Math.max(editorScroll.availableWidth, implicitWidth)
                 height: Math.max(editorScroll.availableHeight, implicitHeight)
                 text: document.text
-                onTextChanged: if (activeFocus && text !== document.text) document.text = text
+                onTextChanged: {
+                    if (activeFocus && text !== document.text) document.text = text
+                    lineNumberModel.scheduleRefresh()
+                }
+                onWidthChanged: lineNumberModel.scheduleRefresh()
+                onWrapModeChanged: lineNumberModel.scheduleRefresh()
                 font.family: "monospace"; font.pixelSize: 15
                 color: omarchyTheme.foreground
                 selectionColor: omarchyTheme.selection
@@ -141,7 +136,11 @@ ApplicationWindow {
                 wrapMode: window.lineWrapping ? TextEdit.WrapAnywhere : TextEdit.NoWrap
                 background: Rectangle { color: "transparent" }
                 focus: true
-                Component.onCompleted: syntaxHighlighter.setEditorDocument(textDocument)
+                Component.onCompleted: {
+                    syntaxHighlighter.setEditorDocument(textDocument)
+                    lineNumberModel.setEditorDocument(textDocument)
+                    lineNumberModel.scheduleRefresh()
+                }
             }
         }
     }
