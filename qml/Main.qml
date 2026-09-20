@@ -89,13 +89,10 @@ ApplicationWindow {
             Repeater {
                 model: lineNumberModel
                 Label {
-                    required property int number
-                    required property real top
-                    required property real lineHeight
-                    x: 0; y: 12 + top - editorScroll.contentItem.contentY
-                    width: gutter.width - 10; height: lineHeight
+                    x: 0; y: 12 + model.lineTop - editorScroll.contentItem.contentY
+                    width: gutter.width - 10; height: model.lineHeight
                     // Wrapped visual rows deliberately have no number: one physical line, one number.
-                    text: number === 0 ? "" : number
+                    text: model.number === 0 ? "" : model.number
                     horizontalAlignment: Text.AlignRight
                     verticalAlignment: Text.AlignTop
                     color: omarchyTheme.mutedForeground; font: editor.font

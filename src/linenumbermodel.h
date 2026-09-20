@@ -10,7 +10,7 @@ class QTextDocument;
 class LineNumberModel final : public QAbstractListModel {
     Q_OBJECT
 public:
-    enum Role { NumberRole = Qt::UserRole + 1, TopRole, HeightRole };
+    enum Role { NumberRole = Qt::UserRole + 1, LineTopRole, LineHeightRole };
     explicit LineNumberModel(QObject *parent = nullptr);
 
     int rowCount(const QModelIndex &parent = {}) const override;

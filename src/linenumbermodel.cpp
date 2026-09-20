@@ -16,13 +16,13 @@ QVariant LineNumberModel::data(const QModelIndex &index, int role) const {
     if (!index.isValid() || index.row() >= m_rows.size()) return {};
     const auto &row = m_rows.at(index.row());
     if (role == NumberRole) return row.number;
-    if (role == TopRole) return row.top;
-    if (role == HeightRole) return row.height;
+    if (role == LineTopRole) return row.top;
+    if (role == LineHeightRole) return row.height;
     return {};
 }
 
 QHash<int, QByteArray> LineNumberModel::roleNames() const {
-    return {{NumberRole, "number"}, {TopRole, "top"}, {HeightRole, "lineHeight"}};
+    return {{NumberRole, "number"}, {LineTopRole, "lineTop"}, {LineHeightRole, "lineHeight"}};
 }
 
 void LineNumberModel::setEditorDocument(QQuickTextDocument *document) {
