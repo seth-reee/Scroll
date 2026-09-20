@@ -104,9 +104,9 @@ ApplicationWindow {
             color: omarchyTheme.foreground
             selectionColor: omarchyTheme.selection
             selectedTextColor: omarchyTheme.foreground
-            // These enums belong to TextEdit (the text item inside TextArea).
-            // Using TextArea.Wrap can appear to toggle without changing layout at runtime.
-            wrapMode: window.lineWrapping ? TextEdit.Wrap : TextEdit.NoWrap
+            // WrapAnywhere is visual only: no newline is inserted into the document.
+            // It also wraps long unbroken script lines, unlike WordWrap.
+            wrapMode: window.lineWrapping ? TextEdit.WrapAnywhere : TextEdit.NoWrap
             background: Rectangle { color: "transparent" }
             focus: true
             Component.onCompleted: syntaxHighlighter.setEditorDocument(textDocument)
