@@ -128,15 +128,25 @@ ApplicationWindow {
                     id: tabButton
                     required property var modelData
                     required property int index
-                    text: (modelData.modified ? "● " : "") + modelData.title
+                    text: ""
+                    implicitWidth: Math.min(tabTitle.implicitWidth, 180) + closeButton.implicitWidth + 30
                     onClicked: document.currentIndex = index
-                    rightPadding: closeButton.width + 18
+                    Label {
+                        id: tabTitle
+                        text: (tabButton.modelData.modified ? "● " : "") + tabButton.modelData.title
+                        color: omarchyTheme.foreground
+                        width: Math.min(implicitWidth, 180)
+                        elide: Text.ElideRight
+                        anchors.left: parent.left
+                        anchors.leftMargin: 10
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
                     ToolButton {
                         id: closeButton
                         text: "×"
                         z: 2
-                        anchors.right: parent.right
-                        anchors.rightMargin: 2
+                        anchors.left: tabTitle.right
+                        anchors.leftMargin: 10
                         anchors.verticalCenter: parent.verticalCenter
                         onClicked: window.requestCloseTab(tabButton.index)
                         ToolTip.visible: hovered
