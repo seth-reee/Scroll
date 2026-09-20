@@ -113,7 +113,11 @@ ApplicationWindow {
                 anchors.fill: parent; anchors.leftMargin: 16; anchors.rightMargin: 16; spacing: 8
                 Label { text: "Qomaedit"; color: omarchyTheme.foreground; font.bold: true; font.pixelSize: 16 }
                 Label { text: " / " + document.fileName; color: omarchyTheme.mutedForeground; Layout.fillWidth: true }
-                ToolButton { text: "Menu"; onClicked: applicationMenu.open() }
+                ToolButton {
+                    id: menuButton
+                    text: "Menu"
+                    onClicked: applicationMenu.popup(menuButton, 0, menuButton.height)
+                }
             }
         }
         TabBar {
