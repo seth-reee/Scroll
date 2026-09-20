@@ -72,7 +72,7 @@ ApplicationWindow {
 
     header: Column {
         width: window.width
-        implicitHeight: toolBar.height + (tabBar.visible ? tabBar.height : 0)
+        height: toolBar.height + (tabBar.visible ? tabBar.height : 0)
         ToolBar {
             id: toolBar
             width: parent.width; height: 48
