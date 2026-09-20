@@ -220,6 +220,7 @@ ApplicationWindow {
                 }
                 onWidthChanged: lineNumberModel.scheduleRefresh()
                 onWrapModeChanged: lineNumberModel.scheduleRefresh()
+                onLineHeightChanged: lineNumberModel.scheduleRefresh()
                 font.family: "monospace"; font.pixelSize: 15
                 color: omarchyTheme.foreground
                 selectionColor: omarchyTheme.selection
@@ -227,6 +228,8 @@ ApplicationWindow {
                 // WrapAnywhere is visual only: no newline is inserted into the document.
                 // It also wraps long unbroken script lines, unlike WordWrap.
                 wrapMode: window.lineWrapping ? TextEdit.WrapAnywhere : TextEdit.NoWrap
+                lineHeightMode: TextEdit.ProportionalHeight
+                lineHeight: window.lineWrapping && settings.wrappedLineSpacing ? 1.6 : 1.0
                 background: Rectangle { color: "transparent" }
                 focus: true
                 Component.onCompleted: {
@@ -280,6 +283,11 @@ ApplicationWindow {
             Label { text: "Editor"; color: omarchyTheme.foreground; font.bold: true }
             CheckBox { text: "Show tabs"; checked: settings.tabsEnabled; onToggled: settings.tabsEnabled = checked }
             CheckBox { text: "Syntax highlighting"; checked: settings.syntaxEnabled; onToggled: settings.syntaxEnabled = checked }
+            CheckBox {
+                text: "Extra visual spacing for wrapped lines"
+                checked: settings.wrappedLineSpacing
+                onToggled: settings.wrappedLineSpacing = checked
+            }
             Label {
                 text: "Disabling syntax highlighting also hides the detected-language label."
                 color: omarchyTheme.mutedForeground; wrapMode: Text.Wrap; Layout.fillWidth: true
