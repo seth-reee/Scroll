@@ -111,7 +111,12 @@ ApplicationWindow {
             background: Rectangle { color: omarchyTheme.panel }
             RowLayout {
                 anchors.fill: parent; anchors.leftMargin: 16; anchors.rightMargin: 16; spacing: 8
-                Label { text: document.fileName; color: omarchyTheme.mutedForeground; Layout.fillWidth: true }
+                Label {
+                    visible: !settings.tabsEnabled
+                    text: document.fileName
+                    color: omarchyTheme.mutedForeground
+                    Layout.fillWidth: true
+                }
                 ToolButton {
                     id: menuButton
                     text: "Menu"
