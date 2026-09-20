@@ -2,6 +2,8 @@
 
 qOmaedit is a small Qt 6 / Qt Quick text editor for scripts and other plain-text files on Omarchy. It is deliberately focused: fast startup, familiar editor basics, and a UI that silently follows the active desktop theme.
 
+Repository: [github.com/seth-reee/qOmaedit](https://github.com/seth-reee/qOmaedit)
+
 ## Features
 
 - Open, create, and safely save UTF-8 text files.

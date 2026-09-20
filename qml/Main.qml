@@ -336,7 +336,7 @@ ApplicationWindow {
             Label { text: "qOmaedit"; color: omarchyTheme.foreground; font.bold: true; font.pixelSize: 20 }
             Label { text: "Version " + applicationVersion; color: omarchyTheme.mutedForeground }
             Text {
-                text: "<a href=\"https://github.com/seth-reee/Qomaedit\">github.com/seth-reee/Qomaedit</a>"
+                text: "<a href=\"https://github.com/seth-reee/qOmaedit\">github.com/seth-reee/qOmaedit</a>"
                 textFormat: Text.RichText
                 color: omarchyTheme.accent
                 onLinkActivated: Qt.openUrlExternally(link)
