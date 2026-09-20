@@ -36,4 +36,12 @@ The build output is intentionally ignored by Git. If `build/` does not exist, re
 
 ## Current scope
 
-Qomaedit is a single-document editor. Tabs, syntax-aware language detection, and richer language support are natural future additions.
+Qomaedit supports multiple open documents through its tab bar. Richer language-specific highlighting and editor features are natural future additions.
+
+## License
+
+Qomaedit is licensed under the MIT License.
+
+You are free to use, modify, distribute, and use Qomaedit commercially, provided that the original copyright and license notices are preserved.
+
+See [LICENSE](LICENSE) for details.
