@@ -96,10 +96,26 @@ ApplicationWindow {
             Repeater {
                 model: document.tabs
                 TabButton {
+                    id: tabButton
                     required property var modelData
                     required property int index
                     text: (modelData.modified ? "● " : "") + modelData.title
                     onClicked: document.currentIndex = index
+                    contentItem: RowLayout {
+                        spacing: 4
+                        Label {
+                            text: tabButton.text
+                            color: omarchyTheme.foreground
+                            elide: Text.ElideRight
+                            Layout.maximumWidth: 180
+                        }
+                        ToolButton {
+                            text: "×"
+                            onClicked: document.closeTab(tabButton.index)
+                            ToolTip.visible: hovered
+                            ToolTip.text: "Close tab"
+                        }
+                    }
                 }
             }
         }

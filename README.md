@@ -5,6 +5,7 @@ Qomaedit is a small Qt 6 / Qt Quick text editor for scripts and other plain-text
 ## Features
 
 - Open, create, and safely save UTF-8 text files.
+- Close saved tabs directly from the close control beside each tab name.
 - Uses the system/platform file picker for Open and Save As.
 - Standard `Ctrl+N`, `Ctrl+O`, `Ctrl+S`, and `Ctrl+F` shortcuts.
 - Find next, replace, and replace all.
