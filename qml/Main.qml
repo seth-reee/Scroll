@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Dialogs
 import QtQuick.Layouts
+import Qt.labs.platform as Platform
 
 ApplicationWindow {
     id: window
@@ -53,8 +53,22 @@ ApplicationWindow {
         })
     }
 
-    FileDialog { id: openDialog; title: "Open script"; onAccepted: document.open(selectedFile) }
-    FileDialog { id: saveDialog; title: "Save script"; fileMode: FileDialog.SaveFile; onAccepted: document.saveAs(selectedFile) }
+    // Platform dialogs delegate to the system file picker rather than drawing a QML dialog.
+    Platform.FileDialog {
+        id: openDialog
+        title: "Open script"
+        fileMode: Platform.FileDialog.OpenFile
+        nameFilters: ["Script and text files (*.sh *.bash *.zsh *.fish *.py *.lua *.js *.ts *.json *.toml *.yaml *.yml *.txt)", "All files (*)"]
+        onAccepted: document.open(file)
+    }
+    Platform.FileDialog {
+        id: saveDialog
+        title: "Save script"
+        fileMode: Platform.FileDialog.SaveFile
+        defaultSuffix: "txt"
+        nameFilters: ["Text files (*.txt)", "All files (*)"]
+        onAccepted: document.saveAs(file)
+    }
 
     header: ToolBar {
         height: 48
