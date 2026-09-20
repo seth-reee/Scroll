@@ -190,7 +190,7 @@ ApplicationWindow {
             Label { text: document.encoding; color: omarchyTheme.mutedForeground; font.pixelSize: 12 }
             Label { visible: settings.syntaxEnabled; text: document.language; color: omarchyTheme.mutedForeground; font.pixelSize: 12 }
             Item { Layout.fillWidth: true }
-            Label { text: document.text.split("\n").length + " lines · " + editor.cursorPosition + " chars"; color: omarchyTheme.mutedForeground; font.pixelSize: 12 }
+            Label { text: document.text.split("\n").length + " lines · " + document.text.length + " chars"; color: omarchyTheme.mutedForeground; font.pixelSize: 12 }
             Button {
                 text: window.lineWrapping ? "Wrap: On" : "Wrap: Off"
                 onClicked: window.toggleLineWrapping()
