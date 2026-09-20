@@ -101,28 +101,17 @@ ApplicationWindow {
                     required property int index
                     text: (modelData.modified ? "● " : "") + modelData.title
                     onClicked: document.currentIndex = index
-                    contentItem: Item {
-                        implicitWidth: tabTitle.implicitWidth + closeButton.implicitWidth + 8
-                        implicitHeight: Math.max(tabTitle.implicitHeight, closeButton.implicitHeight)
-                        Label {
-                            id: tabTitle
-                            text: tabButton.text
-                            color: omarchyTheme.foreground
-                            elide: Text.ElideRight
-                            width: Math.min(implicitWidth, 180)
-                            anchors.left: parent.left
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        ToolButton {
-                            id: closeButton
-                            text: "×"
-                            anchors.left: tabTitle.right
-                            anchors.leftMargin: 4
-                            anchors.verticalCenter: parent.verticalCenter
-                            onClicked: document.closeTab(tabButton.index)
-                            ToolTip.visible: hovered
-                            ToolTip.text: "Close tab"
-                        }
+                    rightPadding: closeButton.width + 8
+                    ToolButton {
+                        id: closeButton
+                        text: "×"
+                        z: 2
+                        anchors.right: parent.right
+                        anchors.rightMargin: 2
+                        anchors.verticalCenter: parent.verticalCenter
+                        onClicked: document.closeTab(tabButton.index)
+                        ToolTip.visible: hovered
+                        ToolTip.text: "Close tab"
                     }
                 }
             }
