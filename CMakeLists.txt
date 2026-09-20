@@ -30,5 +30,6 @@ qt_add_qml_module(qomaedit
 )
 
 target_link_libraries(qomaedit PRIVATE Qt6::Quick Qt6::QuickControls2 Qt6::Widgets)
+target_compile_definitions(qomaedit PRIVATE QOMAEDIT_VERSION="${PROJECT_VERSION}")
 
 install(TARGETS qomaedit)

@@ -113,10 +113,7 @@ ApplicationWindow {
                 anchors.fill: parent; anchors.leftMargin: 16; anchors.rightMargin: 16; spacing: 8
                 Label { text: "Qomaedit"; color: omarchyTheme.foreground; font.bold: true; font.pixelSize: 16 }
                 Label { text: " / " + document.fileName; color: omarchyTheme.mutedForeground; Layout.fillWidth: true }
-                ToolButton { text: "New"; onClicked: document.newFile() }
-                ToolButton { text: "Open"; onClicked: openDialog.open() }
-                ToolButton { text: "Save"; onClicked: window.saveDocument() }
-                ToolButton { text: "Find"; onClicked: findDialog.open() }
+                ToolButton { text: "Menu"; onClicked: applicationMenu.open() }
             }
         }
         TabBar {
@@ -164,6 +161,16 @@ ApplicationWindow {
     Shortcut { sequence: StandardKey.Save; onActivated: window.saveDocument() }
     Shortcut { sequence: StandardKey.New; onActivated: document.newFile() }
     Shortcut { sequence: StandardKey.Find; onActivated: findDialog.open() }
+
+    Menu {
+        id: applicationMenu
+        MenuItem { text: "New"; shortcut: StandardKey.New; onTriggered: document.newFile() }
+        MenuItem { text: "Open…"; shortcut: StandardKey.Open; onTriggered: openDialog.open() }
+        MenuItem { text: "Save"; shortcut: StandardKey.Save; onTriggered: window.saveDocument() }
+        MenuItem { text: "Find and replace…"; shortcut: StandardKey.Find; onTriggered: findDialog.open() }
+        MenuSeparator {}
+        MenuItem { text: "About Qomaedit"; onTriggered: aboutDialog.open() }
+    }
 
     Rectangle {
         anchors.fill: parent; anchors.margins: 16
@@ -311,6 +318,27 @@ ApplicationWindow {
                 text: "Disabling syntax highlighting also hides the detected-language label."
                 color: omarchyTheme.mutedForeground; wrapMode: Text.Wrap; Layout.fillWidth: true
             }
+        }
+    }
+
+    Dialog {
+        id: aboutDialog
+        title: "About Qomaedit"
+        modal: true
+        standardButtons: Dialog.Close
+        width: 380
+        background: Rectangle { color: omarchyTheme.panel; border.color: omarchyTheme.surface; radius: 8 }
+        ColumnLayout {
+            width: parent.width; spacing: 8
+            Label { text: "Qomaedit"; color: omarchyTheme.foreground; font.bold: true; font.pixelSize: 20 }
+            Label { text: "Version " + applicationVersion; color: omarchyTheme.mutedForeground }
+            Text {
+                text: "<a href=\"https://github.com/seth-reee/Qomaedit\">github.com/seth-reee/Qomaedit</a>"
+                textFormat: Text.RichText
+                color: omarchyTheme.accent
+                onLinkActivated: Qt.openUrlExternally(link)
+            }
+            Label { text: "Licensed under the MIT License."; color: omarchyTheme.mutedForeground }
         }
     }
 

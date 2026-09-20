@@ -13,6 +13,7 @@ int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
     app.setOrganizationName("Qomaedit");
     app.setApplicationName("Qomaedit");
+    app.setApplicationVersion(QOMAEDIT_VERSION);
 
     Theme theme;
     Document document;
@@ -24,6 +25,7 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("document", &document);
     engine.rootContext()->setContextProperty("lineNumberModel", &lineNumberModel);
     engine.rootContext()->setContextProperty("settings", &settings);
+    engine.rootContext()->setContextProperty("applicationVersion", app.applicationVersion());
     engine.rootContext()->setContextProperty("syntaxHighlighter", &syntaxHighlighter);
     engine.loadFromModule("Qomaedit", "Main");
     if (engine.rootObjects().isEmpty()) return 1;

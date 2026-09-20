@@ -8,6 +8,8 @@ Qomaedit is a small Qt 6 / Qt Quick text editor for scripts and other plain-text
 - Close saved tabs directly from the close control beside each tab name.
 - Uses the system/platform file picker for Open and Save As.
 - Standard `Ctrl+N`, `Ctrl+O`, `Ctrl+S`, and `Ctrl+F` shortcuts.
+- Compact header Menu for New, Open, Save, Find and replace, and About.
+- About dialog with version, repository link, and license information.
 - Find next, replace, and replace all.
 - Line-number gutter that keeps source-line numbers aligned when visual wrapping is enabled; wrapped continuation rows are left blank.
 - Footer `Wrap: On/Off` control. Wrapping is display-only: it never inserts newlines, so copied and saved text is unchanged.
