@@ -70,17 +70,37 @@ ApplicationWindow {
         onAccepted: document.saveAs(file)
     }
 
-    header: ToolBar {
-        height: 48
-        background: Rectangle { color: omarchyTheme.panel }
-        RowLayout {
-            anchors.fill: parent; anchors.leftMargin: 16; anchors.rightMargin: 16; spacing: 8
-            Label { text: "Qomaedit"; color: omarchyTheme.foreground; font.bold: true; font.pixelSize: 16 }
-            Label { text: " / " + document.fileName; color: omarchyTheme.mutedForeground; Layout.fillWidth: true }
-            ToolButton { text: "New"; onClicked: document.newFile() }
-            ToolButton { text: "Open"; onClicked: openDialog.open() }
-            ToolButton { text: "Save"; onClicked: window.saveDocument() }
-            ToolButton { text: "Find"; onClicked: findDialog.open() }
+    header: Column {
+        width: window.width
+        implicitHeight: toolBar.height + (tabBar.visible ? tabBar.height : 0)
+        ToolBar {
+            id: toolBar
+            width: parent.width; height: 48
+            background: Rectangle { color: omarchyTheme.panel }
+            RowLayout {
+                anchors.fill: parent; anchors.leftMargin: 16; anchors.rightMargin: 16; spacing: 8
+                Label { text: "Qomaedit"; color: omarchyTheme.foreground; font.bold: true; font.pixelSize: 16 }
+                Label { text: " / " + document.fileName; color: omarchyTheme.mutedForeground; Layout.fillWidth: true }
+                ToolButton { text: "New"; onClicked: document.newFile() }
+                ToolButton { text: "Open"; onClicked: openDialog.open() }
+                ToolButton { text: "Save"; onClicked: window.saveDocument() }
+                ToolButton { text: "Find"; onClicked: findDialog.open() }
+            }
+        }
+        TabBar {
+            id: tabBar
+            width: parent.width; height: 34
+            visible: settings.tabsEnabled
+            currentIndex: document.currentIndex
+            background: Rectangle { color: omarchyTheme.background }
+            Repeater {
+                model: document.tabs
+                TabButton {
+                    required property var modelData
+                    text: (modelData.modified ? "● " : "") + modelData.title
+                    onClicked: document.currentIndex = index
+                }
+            }
         }
     }
 
@@ -149,6 +169,7 @@ ApplicationWindow {
                 focus: true
                 Component.onCompleted: {
                     syntaxHighlighter.setEditorDocument(textDocument)
+                    syntaxHighlighter.setEnabled(settings.syntaxEnabled)
                     lineNumberModel.setEditorDocument(textDocument)
                     lineNumberModel.scheduleRefresh()
                 }
@@ -159,6 +180,9 @@ ApplicationWindow {
     footer: Rectangle {
         height: 30; color: omarchyTheme.panel
         RowLayout { anchors.fill: parent; anchors.leftMargin: 16; anchors.rightMargin: 16
+            Button { text: "Settings"; onClicked: settingsDialog.open() }
+            Label { text: document.encoding; color: omarchyTheme.mutedForeground; font.pixelSize: 12 }
+            Label { visible: settings.syntaxEnabled; text: document.language; color: omarchyTheme.mutedForeground; font.pixelSize: 12 }
             Item { Layout.fillWidth: true }
             Label { text: document.text.split("\n").length + " lines · " + editor.cursorPosition + " chars"; color: omarchyTheme.mutedForeground; font.pixelSize: 12 }
             Button {
@@ -169,6 +193,23 @@ ApplicationWindow {
     }
 
     Connections { target: document; function onError(message) { errorDialog.text = message; errorDialog.open() } }
+    Connections { target: settings; function onSyntaxEnabledChanged() { syntaxHighlighter.setEnabled(settings.syntaxEnabled) } }
+
+    Dialog {
+        id: settingsDialog; title: "Settings"; modal: true; standardButtons: Dialog.Close
+        width: 320
+        background: Rectangle { color: omarchyTheme.panel; border.color: omarchyTheme.surface; radius: 8 }
+        ColumnLayout {
+            width: parent.width; spacing: 8
+            Label { text: "Editor"; color: omarchyTheme.foreground; font.bold: true }
+            CheckBox { text: "Show tabs"; checked: settings.tabsEnabled; onToggled: settings.tabsEnabled = checked }
+            CheckBox { text: "Syntax highlighting"; checked: settings.syntaxEnabled; onToggled: settings.syntaxEnabled = checked }
+            Label {
+                text: "Disabling syntax highlighting also hides the detected-language label."
+                color: omarchyTheme.mutedForeground; wrapMode: Text.Wrap; Layout.fillWidth: true
+            }
+        }
+    }
 
     Dialog {
         id: findDialog; title: "Find and replace"; modal: false; standardButtons: Dialog.Close

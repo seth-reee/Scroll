@@ -4,38 +4,99 @@
 #include <QFileInfo>
 #include <QSaveFile>
 
-QString Document::fileName() const {
-    return m_path.isEmpty() ? QStringLiteral("Untitled") : QFileInfo(m_path).fileName();
+Document::Document(QObject *parent) : QObject(parent) {}
+Document::State &Document::current() { return m_tabs[m_currentIndex]; }
+const Document::State &Document::current() const { return m_tabs[m_currentIndex]; }
+QString Document::text() const { return current().text; }
+QString Document::fileName() const { return displayName(current()); }
+bool Document::modified() const { return current().modified; }
+QString Document::language() const { return languageForPath(current().path); }
+
+QVariantList Document::tabs() const {
+    QVariantList result;
+    for (const auto &tab : m_tabs)
+        result.append(QVariantMap{{"title", displayName(tab)}, {"modified", tab.modified}});
+    return result;
+}
+
+void Document::notifyCurrent() {
+    emit textChanged(); emit fileChanged(); emit modifiedChanged(); emit languageChanged();
+    emit tabsChanged(); emit currentIndexChanged();
+}
+
+void Document::setCurrentIndex(int index) {
+    if (index < 0 || index >= m_tabs.size() || index == m_currentIndex) return;
+    m_currentIndex = index;
+    notifyCurrent();
 }
 
 void Document::setText(const QString &text) {
-    if (m_text == text) return;
-    m_text = text;
-    if (!m_modified) { m_modified = true; emit modifiedChanged(); }
-    emit textChanged();
+    auto &tab = current();
+    if (tab.text == text) return;
+    tab.text = text;
+    if (!tab.modified) { tab.modified = true; emit modifiedChanged(); }
+    emit textChanged(); emit tabsChanged();
 }
 
 bool Document::open(const QUrl &url) {
     const QString path = url.toLocalFile();
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) { emit error(file.errorString()); return false; }
-    m_text = QString::fromUtf8(file.readAll());
-    m_path = path;
-    m_modified = false;
-    emit textChanged(); emit fileChanged(); emit modifiedChanged();
+    State loaded{QString::fromUtf8(file.readAll()), path, false};
+    const auto &tab = current();
+    if (tab.path.isEmpty() && tab.text.isEmpty() && !tab.modified) m_tabs[m_currentIndex] = loaded;
+    else { m_tabs.append(loaded); m_currentIndex = m_tabs.size() - 1; }
+    notifyCurrent();
     return true;
 }
 
 bool Document::writeTo(const QString &path) {
     QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) { emit error(file.errorString()); return false; }
-    file.write(m_text.toUtf8());
+    file.write(current().text.toUtf8());
     if (!file.commit()) { emit error(file.errorString()); return false; }
-    m_path = path; m_modified = false;
-    emit fileChanged(); emit modifiedChanged();
+    current().path = path; current().modified = false;
+    notifyCurrent();
     return true;
 }
 
-bool Document::save() { return m_path.isEmpty() ? false : writeTo(m_path); }
+bool Document::save() { return current().path.isEmpty() ? false : writeTo(current().path); }
 bool Document::saveAs(const QUrl &url) { return writeTo(url.toLocalFile()); }
-void Document::newFile() { m_text.clear(); m_path.clear(); m_modified = false; emit textChanged(); emit fileChanged(); emit modifiedChanged(); }
+void Document::newFile() {
+    const auto &tab = current();
+    if (tab.path.isEmpty() && tab.text.isEmpty() && !tab.modified) return;
+    m_tabs.append(State{}); m_currentIndex = m_tabs.size() - 1;
+    notifyCurrent();
+}
+
+void Document::closeTab(int index) {
+    if (index < 0 || index >= m_tabs.size()) return;
+    if (m_tabs[index].modified) { emit error(QStringLiteral("Save or discard changes before closing this tab.")); return; }
+    if (m_tabs.size() == 1) { m_tabs[0] = {}; m_currentIndex = 0; }
+    else {
+        m_tabs.removeAt(index);
+        if (m_currentIndex >= m_tabs.size()) m_currentIndex = m_tabs.size() - 1;
+        else if (index < m_currentIndex) --m_currentIndex;
+    }
+    notifyCurrent();
+}
+
+QString Document::displayName(const State &state) {
+    return state.path.isEmpty() ? QStringLiteral("Untitled") : QFileInfo(state.path).fileName();
+}
+
+QString Document::languageForPath(const QString &path) {
+    const QString extension = QFileInfo(path).suffix().toLower();
+    if (extension == "sh" || extension == "bash" || extension == "zsh" || extension == "fish") return "Shell";
+    if (extension == "py" || extension == "pyw") return "Python";
+    if (extension == "lua") return "Lua";
+    if (extension == "js" || extension == "mjs" || extension == "cjs") return "JavaScript";
+    if (extension == "ts") return "TypeScript";
+    if (extension == "json") return "JSON";
+    if (extension == "toml") return "TOML";
+    if (extension == "yaml" || extension == "yml") return "YAML";
+    if (extension == "html" || extension == "htm") return "HTML";
+    if (extension == "css") return "CSS";
+    if (extension == "md") return "Markdown";
+    return "Plain text";
+}

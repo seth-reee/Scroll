@@ -1,5 +1,6 @@
 #include "document.h"
 #include "linenumbermodel.h"
+#include "settings.h"
 #include "syntaxhighlighter.h"
 #include "theme.h"
 
@@ -16,11 +17,13 @@ int main(int argc, char *argv[]) {
     Theme theme;
     Document document;
     LineNumberModel lineNumberModel;
+    Settings settings;
     SyntaxHighlighter syntaxHighlighter(&theme);
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("omarchyTheme", &theme);
     engine.rootContext()->setContextProperty("document", &document);
     engine.rootContext()->setContextProperty("lineNumberModel", &lineNumberModel);
+    engine.rootContext()->setContextProperty("settings", &settings);
     engine.rootContext()->setContextProperty("syntaxHighlighter", &syntaxHighlighter);
     engine.loadFromModule("Qomaedit", "Main");
     if (engine.rootObjects().isEmpty()) return 1;

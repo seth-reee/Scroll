@@ -14,7 +14,15 @@ void SyntaxHighlighter::setEditorDocument(QQuickTextDocument *document) {
     setDocument(document ? document->textDocument() : nullptr);
 }
 
+void SyntaxHighlighter::setEnabled(bool enabled) {
+    if (m_enabled == enabled) return;
+    m_enabled = enabled;
+    rehighlight();
+    emit enabledChanged();
+}
+
 void SyntaxHighlighter::highlightBlock(const QString &text) {
+    if (!m_enabled) return;
     const auto apply = [this, &text](const QRegularExpression &pattern, const QColor &color) {
         auto match = pattern.globalMatch(text);
         QTextCharFormat format;
