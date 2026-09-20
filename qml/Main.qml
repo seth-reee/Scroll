@@ -37,11 +37,14 @@ ApplicationWindow {
     }
 
     function toggleLineWrapping() {
+        lineWrapping = !lineWrapping
+        refreshEditorLayout()
+    }
+
+    function refreshEditorLayout() {
         const cursor = editor.cursorPosition
         const selectionStart = editor.selectionStart
         const selectionEnd = editor.selectionEnd
-        lineWrapping = !lineWrapping
-
         // TextArea can defer reflow of an existing QTextDocument until it receives
         // an edit or selection event. Toggle a transient selection on the next frame
         // to invalidate that layout without changing the file's text.
@@ -220,7 +223,6 @@ ApplicationWindow {
                 }
                 onWidthChanged: lineNumberModel.scheduleRefresh()
                 onWrapModeChanged: lineNumberModel.scheduleRefresh()
-                onLineHeightChanged: lineNumberModel.scheduleRefresh()
                 font.family: "monospace"; font.pixelSize: 15
                 color: omarchyTheme.foreground
                 selectionColor: omarchyTheme.selection
@@ -228,9 +230,17 @@ ApplicationWindow {
                 // WrapAnywhere is visual only: no newline is inserted into the document.
                 // It also wraps long unbroken script lines, unlike WordWrap.
                 wrapMode: window.lineWrapping ? TextEdit.WrapAnywhere : TextEdit.NoWrap
-                lineHeightMode: TextEdit.ProportionalHeight
-                lineHeight: window.lineWrapping && settings.wrappedLineSpacing ? 1.6 : 1.0
                 background: Rectangle { color: "transparent" }
+                Binding {
+                    target: editor.contentItem
+                    property: "lineHeightMode"
+                    value: TextEdit.ProportionalHeight
+                }
+                Binding {
+                    target: editor.contentItem
+                    property: "lineHeight"
+                    value: window.lineWrapping && settings.wrappedLineSpacing ? 1.6 : 1.0
+                }
                 focus: true
                 Component.onCompleted: {
                     syntaxHighlighter.setEditorDocument(textDocument)
@@ -272,7 +282,11 @@ ApplicationWindow {
     }
 
     Connections { target: document; function onError(message) { errorDialog.text = message; errorDialog.open() } }
-    Connections { target: settings; function onSyntaxEnabledChanged() { syntaxHighlighter.setEnabled(settings.syntaxEnabled) } }
+    Connections {
+        target: settings
+        function onSyntaxEnabledChanged() { syntaxHighlighter.setEnabled(settings.syntaxEnabled) }
+        function onWrappedLineSpacingChanged() { window.refreshEditorLayout(); lineNumberModel.scheduleRefresh() }
+    }
 
     Dialog {
         id: settingsDialog; title: "Settings"; modal: true; standardButtons: Dialog.Close
