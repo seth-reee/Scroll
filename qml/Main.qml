@@ -83,7 +83,7 @@ ApplicationWindow {
         id: openDialog
         title: "Open script"
         fileMode: Platform.FileDialog.OpenFile
-        nameFilters: ["Script and text files (*.sh *.bash *.zsh *.fish *.py *.lua *.js *.ts *.json *.toml *.yaml *.yml *.txt)", "All files (*)"]
+        nameFilters: ["All files (*)", "Script and text files (*.sh *.bash *.zsh *.fish *.py *.lua *.js *.ts *.json *.toml *.yaml *.yml *.txt)"]
         onAccepted: document.open(file)
     }
     Platform.FileDialog {
@@ -112,8 +112,7 @@ ApplicationWindow {
             RowLayout {
                 anchors.fill: parent; anchors.leftMargin: 16; anchors.rightMargin: 16; spacing: 8
                 Label {
-                    visible: !settings.tabsEnabled
-                    text: document.fileName
+                    text: settings.tabsEnabled ? document.directoryPath : document.filePath
                     color: omarchyTheme.mutedForeground
                     Layout.fillWidth: true
                 }

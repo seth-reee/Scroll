@@ -8,7 +8,7 @@ Repository: [github.com/seth-reee/qOmaedit](https://github.com/seth-reee/qOmaedi
 
 - Open, create, and safely save UTF-8 text files.
 - Close saved tabs directly from the close control beside each tab name.
-- Uses the system/platform file picker for Open and Save As.
+- Uses the system/platform file picker for Open and Save As; Open defaults to an all-files filter.
 - Standard `Ctrl+N`, `Ctrl+O`, `Ctrl+S`, and `Ctrl+F` shortcuts.
 - Compact header Menu for New, Open, Save, Find and replace, and About.
 - About dialog with version, repository link, and license information.

@@ -9,6 +9,10 @@ Document::State &Document::current() { return m_tabs[m_currentIndex]; }
 const Document::State &Document::current() const { return m_tabs[m_currentIndex]; }
 QString Document::text() const { return current().text; }
 QString Document::fileName() const { return displayName(current()); }
+QString Document::filePath() const { return current().path.isEmpty() ? QStringLiteral("Untitled") : current().path; }
+QString Document::directoryPath() const {
+    return current().path.isEmpty() ? QStringLiteral("Untitled") : QFileInfo(current().path).absolutePath();
+}
 bool Document::modified() const { return current().modified; }
 QString Document::language() const { return languageForPath(current().path); }
 

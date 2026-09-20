@@ -8,6 +8,8 @@ class Document : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString text READ text WRITE setText NOTIFY textChanged)
     Q_PROPERTY(QString fileName READ fileName NOTIFY fileChanged)
+    Q_PROPERTY(QString filePath READ filePath NOTIFY fileChanged)
+    Q_PROPERTY(QString directoryPath READ directoryPath NOTIFY fileChanged)
     Q_PROPERTY(bool modified READ modified NOTIFY modifiedChanged)
     Q_PROPERTY(QString language READ language NOTIFY languageChanged)
     Q_PROPERTY(QString encoding READ encoding CONSTANT)
@@ -18,6 +20,8 @@ public:
     explicit Document(QObject *parent = nullptr);
     QString text() const;
     QString fileName() const;
+    QString filePath() const;
+    QString directoryPath() const;
     bool modified() const;
     QString language() const;
     QString encoding() const { return QStringLiteral("UTF-8"); }
