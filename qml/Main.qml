@@ -43,6 +43,24 @@ ApplicationWindow {
         return editor.text.slice(0, Math.max(0, position)).split("\n").length
     }
 
+    function toggleLineWrapping() {
+        const cursor = editor.cursorPosition
+        const selectionStart = editor.selectionStart
+        const selectionEnd = editor.selectionEnd
+        lineWrapping = !lineWrapping
+
+        // TextArea can defer reflow of an existing QTextDocument until it receives
+        // an edit or selection event. Toggle a transient selection on the next frame
+        // to invalidate that layout without changing the file's text.
+        Qt.callLater(function() {
+            editor.selectAll()
+            editor.deselect()
+            editor.cursorPosition = cursor
+            if (selectionStart !== selectionEnd)
+                editor.select(selectionStart, selectionEnd)
+        })
+    }
+
     FileDialog { id: openDialog; title: "Open script"; onAccepted: document.open(selectedFile) }
     FileDialog { id: saveDialog; title: "Save script"; fileMode: FileDialog.SaveFile; onAccepted: document.saveAs(selectedFile) }
 
@@ -129,7 +147,7 @@ ApplicationWindow {
             Label { text: document.text.split("\n").length + " lines · " + editor.cursorPosition + " chars"; color: omarchyTheme.mutedForeground; font.pixelSize: 12 }
             Button {
                 text: window.lineWrapping ? "Wrap: On" : "Wrap: Off"
-                onClicked: window.lineWrapping = !window.lineWrapping
+                onClicked: window.toggleLineWrapping()
             }
         }
     }
