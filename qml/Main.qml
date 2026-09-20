@@ -10,6 +10,7 @@ ApplicationWindow {
     visible: true
     title: (document.modified ? "● " : "") + document.fileName + " — Qomaedit"
     color: omarchyTheme.background
+    property bool lineWrapping: false
 
     function saveDocument() {
         if (document.fileName === "Untitled") saveDialog.open()
@@ -91,7 +92,7 @@ ApplicationWindow {
             color: omarchyTheme.foreground
             selectionColor: omarchyTheme.selection
             selectedTextColor: omarchyTheme.foreground
-            wrapMode: TextArea.NoWrap
+            wrapMode: window.lineWrapping ? TextArea.Wrap : TextArea.NoWrap
             background: Rectangle { color: "transparent" }
             focus: true
             Component.onCompleted: syntaxHighlighter.setEditorDocument(textDocument)
@@ -104,6 +105,10 @@ ApplicationWindow {
             Label { text: omarchyTheme.name; color: omarchyTheme.accent; font.pixelSize: 12 }
             Item { Layout.fillWidth: true }
             Label { text: editor.cursorPosition + " chars"; color: omarchyTheme.mutedForeground; font.pixelSize: 12 }
+            Button {
+                text: window.lineWrapping ? "Wrap: On" : "Wrap: Off"
+                onClicked: window.lineWrapping = !window.lineWrapping
+            }
         }
     }
 
