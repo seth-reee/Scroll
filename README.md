@@ -50,6 +50,18 @@ tab synchronization, and viewport-sized gutters with a 20,000-line document.
 They run headlessly with Qt's offscreen platform. Use `-DBUILD_TESTING=OFF` when
 configuring a build that does not need the tests or the Qt Test component.
 
+For a repeatable Linux memory measurement of the compiled app:
+
+```bash
+cmake --build build --target profile_memory
+./build/profile_memory ./build/qomaedit
+```
+
+This optional probe uses fresh processes, isolated settings, syntax highlighting,
+and generated files of up to 100,000 lines. It reports RSS and PSS after CPU
+activity settles (or explicitly flags a timeout). It uses headless software
+rendering; a live desktop's graphics backend can change memory usage.
+
 ## AppImage build
 
 An x86_64 AppImage recipe is provided in `packaging/build-appimage.sh` and has been tested in a Debian Trixie Distrobox. Install the Qt 6 development packages, `cmake`, `ninja-build`, and `patchelf` in the build container, then place the current x86_64 LinuxDeploy and LinuxDeploy Qt plugin AppImages in `.appimage-tools/`.

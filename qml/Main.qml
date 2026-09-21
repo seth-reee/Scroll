@@ -275,12 +275,11 @@ ApplicationWindow {
 
         Flickable {
             id: editorScroll
+            objectName: "editorScroll"
             anchors.fill: parent; anchors.leftMargin: gutter.width + 12; anchors.rightMargin: 12; anchors.topMargin: 12; anchors.bottomMargin: 12
             clip: true
             interactive: true
             flickableDirection: Flickable.AutoFlickIfNeeded
-            contentWidth: editor.width
-            contentHeight: editor.height
             onContentYChanged: lineNumberModel.setViewport(contentY, height)
             onHeightChanged: lineNumberModel.setViewport(contentY, height)
             Component.onCompleted: lineNumberModel.setViewport(contentY, height)
@@ -297,16 +296,20 @@ ApplicationWindow {
                 width: editorScroll.width - (verticalScrollBar.visible ? verticalScrollBar.width : 0)
             }
 
-            TextArea {
+            // Attach the editor so Qt tracks the viewport and reveals the cursor.
+            TextArea.flickable: TextArea {
                 id: editor
                 objectName: "editor"
-                // Flickable owns the viewport; TextArea grows to its content inside it.
-                width: window.lineWrapping ? editorScroll.width : Math.max(editorScroll.width, implicitWidth)
-                height: Math.max(editorScroll.height, implicitHeight)
                 textFormat: TextEdit.PlainText
                 persistentSelection: true
                 onTextChanged: {
-                    if (!window.syncingEditor && text !== document.text) document.text = text
+                    if (!window.syncingEditor) {
+                        // Guard the return signal instead of serializing and comparing
+                        // the whole editor text again for our own update.
+                        window.syncingEditor = true
+                        document.text = text
+                        window.syncingEditor = false
+                    }
                     lineNumberModel.scheduleRefresh()
                 }
                 onWidthChanged: lineNumberModel.scheduleRefresh()
@@ -363,7 +366,7 @@ ApplicationWindow {
         target: document
         function onError(message) { errorDialog.text = message; errorDialog.open() }
         function onTextChanged() {
-            if (editor.text === document.text) return
+            if (window.syncingEditor) return
             window.syncingEditor = true
             editor.text = document.text
             window.syncingEditor = false

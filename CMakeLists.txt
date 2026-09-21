@@ -36,6 +36,8 @@ install(TARGETS qomaedit)
 
 include(CTest)
 if(BUILD_TESTING)
+    add_executable(profile_memory EXCLUDE_FROM_ALL tests/profile_memory.cpp)
+    target_link_libraries(profile_memory PRIVATE Qt6::Core)
     find_package(Qt6 6.5 REQUIRED COMPONENTS Test)
     qt_add_executable(editor_tests
         tests/editor_tests.cpp

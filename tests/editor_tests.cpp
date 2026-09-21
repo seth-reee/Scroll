@@ -6,6 +6,7 @@
 
 #include <QApplication>
 #include <QFile>
+#include <QElapsedTimer>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickTextDocument>
@@ -48,6 +49,69 @@ private:
     };
 
 private slots:
+    void largeDocumentTyping() {
+        Window w;
+        QVERIFY(w.root());
+        auto *window = qobject_cast<QQuickWindow *>(w.root());
+        QObject *editor = w.item("editor");
+        const QString source = QString("const value = 123; // A representative line of source text for profiling.\n").repeated(20000);
+        w.document.setText(source);
+        editor->setProperty("cursorPosition", editor->property("length"));
+        QMetaObject::invokeMethod(editor, "forceActiveFocus");
+        QTest::qWait(50);
+        qint64 total = 0;
+        qint64 worst = 0;
+        for (int i = 0; i < 30; ++i) {
+            QElapsedTimer timer;
+            timer.start();
+            QTest::keyClick(window, Qt::Key_A);
+            QCoreApplication::processEvents();
+            const qint64 elapsed = timer.nsecsElapsed();
+            total += elapsed;
+            worst = qMax(worst, elapsed);
+        }
+        QCOMPARE(w.document.text(), source + QString(30, QLatin1Char('a')));
+        qInfo("20k-line input/event processing: mean %.2f ms, max %.2f ms (30 keys; excludes display latency)",
+              total / 30.0 / 1000000.0, worst / 1000000.0);
+    }
+
+    void typingKeepsCursorVisible() {
+        Window w;
+        QVERIFY(w.root());
+        auto *window = qobject_cast<QQuickWindow *>(w.root());
+        QObject *editor = w.item("editor");
+        QObject *scroll = w.item("editorScroll");
+        QVERIFY(scroll);
+        w.document.setText(QString("line\n").repeated(100));
+        editor->setProperty("cursorPosition", editor->property("length"));
+        QMetaObject::invokeMethod(editor, "forceActiveFocus");
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(scroll->property("contentY").toReal() > 0);
+        const auto visible = [&] {
+            const QRectF cursor = editor->property("cursorRectangle").toRectF();
+            const qreal top = scroll->property("contentY").toReal();
+            return cursor.top() >= top && cursor.bottom() <= top + scroll->property("height").toReal() + 1;
+        };
+        QTRY_VERIFY(visible());
+        for (int i = 0; i < 20; ++i) QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(visible());
+        // Scrolling up to read must not snap back to the insertion point.
+        scroll->setProperty("contentY", 0);
+        QTest::qWait(30);
+        QCOMPARE(scroll->property("contentY").toReal(), 0);
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(visible());
+        editor->setProperty("cursorPosition", 0);
+        QTRY_COMPARE(scroll->property("contentY").toReal(), 0);
+        w.document.setText(QString(1000, QLatin1Char('x')));
+        editor->setProperty("cursorPosition", editor->property("length"));
+        QTRY_VERIFY(scroll->property("contentX").toReal() > 0);
+        w.root()->setProperty("lineWrapping", true);
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(visible());
+        QTRY_COMPARE(scroll->property("contentX").toReal(), 0);
+    }
+
     void fileSafety() {
         Document doc;
         QSignalSpy errors(&doc, &Document::error);

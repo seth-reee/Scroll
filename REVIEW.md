@@ -52,3 +52,36 @@ bound, not an end-to-end memory or startup benchmark.
   during this pass.
 - Native dialog behavior on a live Wayland desktop and the minimum supported
   Qt 6.5 version still need platform testing.
+
+## Scrolling and memory follow-up
+
+The editor now uses `TextArea.flickable`, letting Qt manage content dimensions
+and keep the cursor visible while typing, navigating, and wrapping. Regression
+coverage checks added newlines, horizontal scrolling, wrapping, and that manually
+scrolling upward does not snap back to the cursor.
+
+Text synchronization now guards its return signal instead of repeatedly reading
+and comparing the entire editor text. A synthetic 20,000-line/30-key test measured
+mean input/event processing of 33.72 ms before this change and 27.66 ms afterward
+on the development machine. These are single-run samples, not display latency
+measurements or guarantees. Whole-document serialization remains a bottleneck.
+
+The opt-in `profile_memory` target launches the real Release executable in fresh
+processes with isolated settings and highlighting enabled. On Qt 6.11.2, using
+offscreen/software rendering and 74-byte generated source lines, observed memory
+was approximately:
+
+| Source lines | File size | RSS (MiB) | PSS (MiB) |
+| --- | --- | --- | --- |
+| Empty | 0 | 70 | 36 |
+| 1,000 | 74 KB | 75 | 41 |
+| 20,000 | 1.48 MB | 161 | 127 |
+| 100,000 | 7.4 MB | 523 | 489 |
+
+RSS includes shared library pages; PSS apportions those pages among processes.
+These are snapshots, not peak allocations or total GPU memory. The 100,000-line
+run did not meet the probe's idle threshold within its observation window and
+used about 5% of one CPU core in the subsequent one-second sample. The smaller
+runs sampled 0–1%. The scrolling integration did not materially change memory
+use. Large-file memory and responsiveness still need further work; these results
+do not establish that the editor is optimally lightweight.
