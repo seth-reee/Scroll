@@ -5,8 +5,10 @@
 #include "theme.h"
 
 #include <QApplication>
+#include <QDir>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QUrl>
 
 int main(int argc, char *argv[]) {
     // QApplication supplies the platform file-dialog backend used on Linux.
@@ -29,5 +31,12 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("syntaxHighlighter", &syntaxHighlighter);
     engine.loadFromModule("Qomaedit", "Main");
     if (engine.rootObjects().isEmpty()) return 1;
+
+    // Desktop launchers pass selected files as positional arguments. Open each
+    // one after QML has loaded so any file error can be shown by the UI.
+    const auto arguments = app.arguments();
+    for (qsizetype index = 1; index < arguments.size(); ++index)
+        document.open(QUrl::fromUserInput(arguments.at(index), QDir::currentPath(), QUrl::AssumeLocalFile));
+
     return app.exec();
 }

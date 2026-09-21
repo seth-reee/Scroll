@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=qOmaedit
+Comment=A Qt Quick script editor that follows the Omarchy theme
+Exec=qomaedit %F
+Icon=qomaedit
+Terminal=false
+Categories=Utility;TextEditor;Development;
+MimeType=text/plain;text/x-shellscript;application/x-shellscript;
+Keywords=text;editor;script;Omarchy;
+StartupNotify=true

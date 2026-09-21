@@ -7,6 +7,7 @@ Repository: [github.com/seth-reee/qOmaedit](https://github.com/seth-reee/qOmaedi
 ## Features
 
 - Open, create, and safely save UTF-8 text files.
+- Opens files passed from the desktop file manager or command line; multiple files open in tabs.
 - Close saved tabs directly from the close control beside each tab name.
 - Uses the system/platform file picker for Open and Save As; Open defaults to an all-files filter.
 - Standard `Ctrl+N`, `Ctrl+O`, `Ctrl+S`, and `Ctrl+F` shortcuts.
@@ -37,6 +38,18 @@ cmake --build build
 ```
 
 The build output is intentionally ignored by Git. If `build/` does not exist, rerun the configure command above before building.
+
+## AppImage build
+
+An x86_64 AppImage recipe is provided in `packaging/build-appimage.sh` and has been tested in a Debian Trixie Distrobox. Install the Qt 6 development packages, `cmake`, `ninja-build`, and `patchelf` in the build container, then place the current x86_64 LinuxDeploy and LinuxDeploy Qt plugin AppImages in `.appimage-tools/`.
+
+Run:
+
+```bash
+./packaging/build-appimage.sh
+```
+
+The finished portable application is written to `dist/qOmaedit-x86_64.AppImage`. It includes native Wayland support for Omarchy/Hyprland and an X11 fallback.
 
 ## Current scope
 
