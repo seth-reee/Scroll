@@ -10,6 +10,23 @@ ApplicationWindow {
     visible: true
     title: (document.modified ? "● " : "") + document.fileName + " — qOmaedit"
     color: omarchyTheme.background
+    // Qt Quick Controls do not read Omarchy's colors.toml themselves. Supplying
+    // the application palette makes their native/default styling follow the
+    // same live palette as the editor surfaces below.
+    palette {
+        window: omarchyTheme.background
+        windowText: omarchyTheme.foreground
+        base: omarchyTheme.background
+        alternateBase: omarchyTheme.panel
+        text: omarchyTheme.foreground
+        button: omarchyTheme.surface
+        buttonText: omarchyTheme.foreground
+        highlight: omarchyTheme.selection
+        highlightedText: omarchyTheme.foreground
+        toolTipBase: omarchyTheme.panel
+        toolTipText: omarchyTheme.foreground
+        placeholderText: omarchyTheme.mutedForeground
+    }
     property bool lineWrapping: false
     property int pendingCloseTab: -1
 
