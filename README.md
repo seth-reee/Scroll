@@ -1,6 +1,6 @@
 # qOmaedit
 
-qOmaedit is a small Qt 6 / Qt Quick text editor for scripts and other plain-text files on Omarchy. It is deliberately focused: fast startup, familiar editor basics, and a UI that silently follows the active desktop theme.
+qOmaedit is a small Qt 6 Widgets text editor for scripts and other plain-text files on Omarchy. It uses QPlainTextEdit, keeps one text document per tab, and paints highlighting and line numbers only around the viewport. No QML runtime or Qt Quick scene graph is needed.
 
 Repository: [github.com/seth-reee/qOmaedit](https://github.com/seth-reee/qOmaedit)
 
@@ -14,11 +14,14 @@ Repository: [github.com/seth-reee/qOmaedit](https://github.com/seth-reee/qOmaedi
 - Compact header Menu for New, Open, Save, Find and replace, and About.
 - About dialog with version, repository link, and license information.
 - Find next, replace, and replace all.
+- Independent undo history, cursor position, selection, and scrolling in each tab. Replace All is a single undoable operation.
+- Automatic scrolling to keep the insertion point visible while typing.
 - Line-number gutter that keeps source-line numbers aligned when visual wrapping is enabled; wrapped continuation rows are left blank.
 - Footer `Wrap: On/Off` control. Wrapping is display-only: it never inserts newlines, so copied and saved text is unchanged.
 - Optional visual guides before wrapped continuation lines, controlled in Settings and never written to the file.
 - Mouse-wheel scrolling and draggable vertical/horizontal scrollbars. The horizontal bar hides while wrapping is on.
 - Lightweight highlighting for common shell, Python, Lua, and JavaScript-like comments, strings, numbers, and keywords.
+- Exceptionally long physical lines (over 32,768 characters) remain editable but skip syntax coloring to bound formatting work. Large files with normal-length lines remain highlighted.
 - Live Omarchy palette support. qOmaedit reads `~/.local/state/omarchy/current/theme/colors.toml` and updates its colors after a theme switch without displaying the theme name.
 
 ## Build and run
@@ -26,13 +29,13 @@ Repository: [github.com/seth-reee/qOmaedit](https://github.com/seth-reee/qOmaedi
 On Arch/Omarchy, install the build tools and Qt packages if necessary:
 
 ```bash
-sudo pacman -S --needed cmake ninja qt6-base qt6-declarative
+sudo pacman -S --needed cmake ninja qt6-base
 ```
 
 Configure, build, and run:
 
 ```bash
-cmake -S . -B build -G Ninja
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ./build/qomaedit
 ```
@@ -46,7 +49,7 @@ ctest --test-dir build --output-on-failure
 ```
 
 Tests exercise file safety, unsaved-window protection, save failures, find/replace,
-tab synchronization, and viewport-sized gutters with a 20,000-line document.
+per-tab undo, automatic scrolling, and bounded highlighting with a 20,000-line document.
 They run headlessly with Qt's offscreen platform. Use `-DBUILD_TESTING=OFF` when
 configuring a build that does not need the tests or the Qt Test component.
 
@@ -57,10 +60,21 @@ cmake --build build --target profile_memory
 ./build/profile_memory ./build/qomaedit
 ```
 
-This optional probe uses fresh processes, isolated settings, syntax highlighting,
-and generated files of up to 100,000 lines. It reports RSS and PSS after CPU
-activity settles (or explicitly flags a timeout). It uses headless software
-rendering; a live desktop's graphics backend can change memory usage.
+This optional Linux probe uses fresh processes, isolated settings, syntax
+highlighting, and generated JavaScript files of up to 100,000 lines. It reports
+RSS/PSS after an eight-second warmup and samples CPU for one second. Active
+processes are flagged so that you can rerun with a longer `--settle-ms`.
+The default uses Qt's offscreen backend; a live desktop changes memory usage.
+
+For a comparison with installed KWrite and gedit on the same desktop:
+
+```bash
+./build/profile_memory --desktop --compare --repeats 2 ./build/qomaedit
+```
+
+This opens temporary test windows and closes only the processes it launches.
+User editor settings are isolated; no installation or desktop settings are changed.
+See [REVIEW.md](REVIEW.md) for measured results and limitations.
 
 ## AppImage build
 

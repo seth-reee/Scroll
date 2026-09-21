@@ -16,7 +16,7 @@ for tool in "${linuxdeploy}" "${qt_plugin}"; do
     fi
 done
 
-cmake -S "${project_dir}" -B "${build_dir}" -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake -S "${project_dir}" -B "${build_dir}" -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
 cmake --build "${build_dir}" --parallel
 
 rm -rf "${app_dir}"
@@ -45,7 +45,6 @@ done
 
 mkdir -p "${dist_dir}"
 cd "${dist_dir}"
-export QML_SOURCES_PATHS="${project_dir}/qml"
 export LINUXDEPLOY_PLUGIN_QT_QMAKE="$(command -v qmake6)"
 export APPIMAGE_EXTRACT_AND_RUN=1
 "${linuxdeploy}" --appimage-extract-and-run \

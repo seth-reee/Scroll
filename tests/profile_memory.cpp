@@ -1,79 +1,117 @@
 #include <QCoreApplication>
-#include <QFile>
+#include <QCommandLineParser>
 #include <QElapsedTimer>
+#include <QFile>
 #include <QProcess>
 #include <QProcessEnvironment>
-#include <QTemporaryFile>
-#include <QTemporaryDir>
 #include <QSettings>
+#include <QStandardPaths>
+#include <QTemporaryDir>
 #include <QTextStream>
-#include <QThread>
 #include <unistd.h>
 
-// Linux-only, opt-in measurement of the actual executable, in fresh processes.
+namespace {
+QByteArray read(const QString &path) {
+    QFile file(path);
+    return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
+}
+qint64 ticks(qint64 pid) {
+    const auto raw = read("/proc/" + QString::number(pid) + "/stat");
+    const auto fields = raw.mid(raw.lastIndexOf(')') + 2).split(' ');
+    return fields.size() > 12 ? fields[11].toLongLong() + fields[12].toLongLong() : -1;
+}
+}
+
 int main(int argc, char **argv) {
     QCoreApplication app(argc, argv);
-    if (app.arguments().size() != 2) qFatal("Usage: profile_memory /path/to/qomaedit");
+    QCommandLineParser parser;
+    parser.addHelpOption();
+    parser.addPositionalArgument("executable", "Path to the qomaedit executable");
+    parser.addOption({"desktop", "Use the live desktop instead of Qt's offscreen backend (opens test windows)"});
+    parser.addOption({"compare", "Also measure installed KWrite and gedit; requires --desktop"});
+    parser.addOption({"repeats", "Repeat with rotated application order (1 to 5)", "count", "1"});
+    parser.addOption({"settle-ms", "Wait before sampling memory (at least 1000 ms)", "milliseconds", "8000"});
+    parser.process(app);
+    const int repeats = parser.value("repeats").toInt();
+    const int settle = parser.value("settle-ms").toInt();
+    if (parser.positionalArguments().size() != 1 || repeats < 1 || repeats > 5 || settle < 1000
+        || (parser.isSet("compare") && !parser.isSet("desktop"))) parser.showHelp(1);
+    QStringList names{"qOmaedit"};
+    QStringList programs{parser.positionalArguments().first()};
+    if (parser.isSet("compare")) {
+        for (const QString &name : {QStringLiteral("kwrite"), QStringLiteral("gedit")}) {
+            const auto executable = QStandardPaths::findExecutable(name);
+            if (executable.isEmpty()) { qCritical("Missing editor: %s", qPrintable(name)); return 1; }
+            names << name;
+            programs << executable;
+        }
+    }
+    QTemporaryDir data;
+    if (!data.isValid()) return 1;
     QTextStream out(stdout);
-    QTemporaryDir config;
-    if (!config.isValid()) qFatal("Cannot isolate settings");
-    QSettings settings(config.filePath("qOmaedit/qOmaedit.conf"), QSettings::IniFormat);
-    settings.setValue("editor/syntaxEnabled", true);
-    settings.setValue("editor/tabsEnabled", true);
-    settings.sync();
-    out << "Headless/software rendering, syntax enabled; memory in KiB\n";
-    for (const int lines : {0, 1000, 20000, 100000}) {
-        QTemporaryFile sample;
-        if (!sample.open()) qFatal("Cannot create sample");
-        const QByteArray line("const value = 123; // A representative line of source text for profiling.\n");
-        for (int i = 0; i < lines; ++i)
-            if (sample.write(line) != line.size()) qFatal("Cannot write sample");
-        sample.flush();
-        QProcess process;
-        auto environment = QProcessEnvironment::systemEnvironment();
-        environment.insert("QT_QPA_PLATFORM", "offscreen");
-        environment.insert("QT_QUICK_BACKEND", "software");
-        environment.insert("XDG_CONFIG_HOME", config.path());
-        process.setProcessEnvironment(environment);
-        process.start(app.arguments().at(1), {sample.fileName()});
-        if (!process.waitForStarted()) qFatal("Cannot start editor");
-        QThread::msleep(3000);
-        const QString proc = "/proc/" + QString::number(process.processId());
-        const auto cpuTicks = [&proc] {
-            QFile stat(proc + "/stat");
-            if (!stat.open(QIODevice::ReadOnly)) qFatal("Cannot read process CPU");
-            const auto data = stat.readAll();
-            const auto fields = data.mid(data.lastIndexOf(')') + 2).split(' ');
-            return fields.at(11).toLongLong() + fields.at(12).toLongLong();
-        };
-        QElapsedTimer timer;
-        timer.start();
-        auto previousTicks = cpuTicks();
-        int quietSamples = 0;
-        while (quietSamples < 5 && timer.elapsed() < 10000) {
-            QThread::msleep(200);
-            const auto ticks = cpuTicks();
-            quietSamples = ticks - previousTicks <= 1 ? quietSamples + 1 : 0;
-            previousTicks = ticks;
+    out << (parser.isSet("desktop") ? "Desktop" : "Headless")
+        << "; isolated settings; syntax enabled; " << settle << " ms warmup; RSS/PSS in KiB\n";
+    for (int run = 0; run < repeats; ++run) {
+        for (int lines : {0, 1000, 20000, 100000}) {
+            const QString path = data.filePath(QString::number(lines) + ".js");
+            QFile sample(path);
+            if (!sample.open(QIODevice::WriteOnly)) return 1;
+            const QByteArray line("const value = 123; // A representative line of source text for profiling.\n");
+            for (int i = 0; i < lines; ++i)
+                if (sample.write(line) != line.size()) return 1;
+            sample.close();
+            for (int offset = 0; offset < programs.size(); ++offset) {
+                const int index = (offset + run) % programs.size();
+                QTemporaryDir profile;
+                if (!profile.isValid()) return 1;
+                QSettings settings(profile.filePath("config/qOmaedit/qOmaedit.conf"), QSettings::IniFormat);
+                settings.setValue("editor/syntaxEnabled", true);
+                settings.setValue("editor/tabsEnabled", true);
+                settings.sync();
+                auto env = QProcessEnvironment::systemEnvironment();
+                env.insert("XDG_CONFIG_HOME", profile.filePath("config"));
+                env.insert("XDG_CACHE_HOME", profile.filePath("cache"));
+                env.insert("XDG_DATA_HOME", profile.filePath("data"));
+                env.insert("GSETTINGS_BACKEND", "memory");
+                if (parser.isSet("desktop")) {
+                    const bool wayland = !env.value("WAYLAND_DISPLAY").isEmpty();
+                    env.insert("QT_QPA_PLATFORM", wayland ? "wayland" : "xcb");
+                    env.insert("GDK_BACKEND", wayland ? "wayland" : "x11");
+                    env.remove("QT_QUICK_BACKEND");
+                } else {
+                    env.insert("QT_QPA_PLATFORM", "offscreen");
+                    env.insert("QT_QUICK_BACKEND", "software");
+                }
+                QProcess process;
+                process.setProcessEnvironment(env);
+                QStringList args;
+                if (names[index] == "gedit") args << "--standalone";
+                args << path;
+                process.start(programs[index], args);
+                if (!process.waitForStarted() || process.waitForFinished(settle)) {
+                    out << "Failed to keep " << names[index] << " running: " << process.readAllStandardError() << '\n';
+                    return 1;
+                }
+                const auto pid = process.processId();
+                const auto memory = read("/proc/" + QString::number(pid) + "/smaps_rollup");
+                if (memory.isEmpty()) { process.terminate(); process.waitForFinished(); return 1; }
+                out << "run=" << run + 1 << " editor=" << names[index] << " lines=" << lines;
+                for (const auto &entry : memory.split('\n'))
+                    if (entry.startsWith("Rss:") || entry.startsWith("Pss:")) out << " " << entry.simplified();
+                const auto startTicks = ticks(pid);
+                QElapsedTimer timer;
+                timer.start();
+                if (process.waitForFinished(1000)) return 1;
+                const double cpu = (ticks(pid) - startTicks) * 100000.0 / (sysconf(_SC_CLK_TCK) * timer.elapsed());
+                out << " sampled_cpu=" << cpu << "%";
+                if (cpu > 2) out << " (still active; repeat with a longer --settle-ms)";
+                out << '\n';
+                out.flush();
+                process.terminate();
+                if (!process.waitForFinished(3000)) { process.kill(); process.waitForFinished(); }
+                const auto errors = process.readAllStandardError();
+                if (!errors.isEmpty()) out << names[index] << " stderr: " << errors << '\n';
+            }
         }
-        QFile memory(proc + "/smaps_rollup");
-        if (!memory.open(QIODevice::ReadOnly)) qFatal("Cannot read process memory");
-        out << lines << " lines, " << sample.size() << " bytes, "
-            << (quietSamples == 5 ? "CPU settled" : "idle threshold not reached") << ":\n";
-        for (const auto &entry : memory.readAll().split('\n')) {
-            if (entry.startsWith("Rss:") || entry.startsWith("Pss:") || entry.startsWith("Private_Dirty:"))
-                out << "  " << entry << '\n';
-        }
-        const auto idleStart = cpuTicks();
-        QElapsedTimer idleTimer;
-        idleTimer.start();
-        QThread::msleep(1000);
-        out << "  idle CPU (% of one core): "
-            << 100000.0 * (cpuTicks() - idleStart) / (sysconf(_SC_CLK_TCK) * idleTimer.elapsed()) << '\n';
-        out.flush();
-        process.terminate();
-        if (!process.waitForFinished(3000)) { process.kill(); process.waitForFinished(); }
-        const auto errors = process.readAllStandardError();
-        if (!errors.isEmpty()) out << "  stderr: " << errors << '\n';
     }
 }

@@ -1,26 +1,8 @@
 #pragma once
-
-#include <QSyntaxHighlighter>
-
-class QQuickTextDocument;
+#include <QTextLayout>
 class Theme;
-
-class SyntaxHighlighter final : public QSyntaxHighlighter {
-    Q_OBJECT
-    Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
+// Stateless single-line coloring, requested only for visible blocks.
+class SyntaxHighlighter {
 public:
-    explicit SyntaxHighlighter(Theme *theme, QObject *parent = nullptr);
-    Q_INVOKABLE void setEditorDocument(QQuickTextDocument *document);
-    bool enabled() const { return m_enabled; }
-    Q_INVOKABLE void setEnabled(bool enabled);
-
-signals:
-    void enabledChanged();
-
-protected:
-    void highlightBlock(const QString &text) override;
-
-private:
-    Theme *m_theme;
-    bool m_enabled = true;
+    static QList<QTextLayout::FormatRange> formats(const QString &text, const Theme &theme);
 };
