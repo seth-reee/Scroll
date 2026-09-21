@@ -220,6 +220,14 @@ void MainWindow::applyTheme() {
     p.setColor(QPalette::HighlightedText, m_theme.foreground());
     p.setColor(QPalette::ToolTipBase, m_theme.panel());
     p.setColor(QPalette::ToolTipText, m_theme.foreground());
+    p.setColor(QPalette::Disabled, QPalette::WindowText, m_theme.mutedForeground());
+    p.setColor(QPalette::Disabled, QPalette::Text, m_theme.mutedForeground());
+    p.setColor(QPalette::Disabled, QPalette::ButtonText, m_theme.mutedForeground());
+    // Popups are separate windows and do not inherit the main window's palette
+    // by default. Set the application palette for menus and dialogs, including
+    // editor context menus created later and popups open during a theme change.
+    qApp->setPalette(p);
+    qApp->setPalette(p, "QMenu");
     setPalette(p);
 }
 void MainWindow::applySettings() {
