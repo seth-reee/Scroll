@@ -9,6 +9,7 @@ class QTextDocument;
 
 class LineNumberModel final : public QAbstractListModel {
     Q_OBJECT
+    Q_PROPERTY(int lineCount READ lineCount NOTIFY lineCountChanged)
 public:
     enum Role { NumberRole = Qt::UserRole + 1, LineTopRole, LineHeightRole };
     explicit LineNumberModel(QObject *parent = nullptr);
@@ -19,6 +20,11 @@ public:
 
     Q_INVOKABLE void setEditorDocument(QQuickTextDocument *document);
     Q_INVOKABLE void scheduleRefresh();
+    Q_INVOKABLE void setViewport(qreal top, qreal height);
+    int lineCount() const;
+
+signals:
+    void lineCountChanged();
 
 private:
     struct Row { int number; qreal top; qreal height; };
@@ -26,4 +32,6 @@ private:
     QPointer<QTextDocument> m_document;
     QVector<Row> m_rows;
     bool m_refreshQueued = false;
+    qreal m_viewportTop = 0;
+    qreal m_viewportHeight = 720;
 };

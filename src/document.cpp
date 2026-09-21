@@ -3,6 +3,15 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QSaveFile>
+#include <QStringDecoder>
+
+namespace {
+QString localPath(const QUrl &url) {
+    const QFileInfo info(url.toLocalFile());
+    const QString canonical = info.canonicalFilePath();
+    return canonical.isEmpty() ? info.absoluteFilePath() : canonical;
+}
+}
 
 Document::Document(QObject *parent) : QObject(parent) {}
 Document::State &Document::current() { return m_tabs[m_currentIndex]; }
@@ -38,15 +47,28 @@ void Document::setText(const QString &text) {
     auto &tab = current();
     if (tab.text == text) return;
     tab.text = text;
-    if (!tab.modified) { tab.modified = true; emit modifiedChanged(); }
-    emit textChanged(); emit tabsChanged();
+    if (!tab.modified) { tab.modified = true; emit modifiedChanged(); emit tabsChanged(); }
+    emit textChanged();
 }
 
 bool Document::open(const QUrl &url) {
-    const QString path = url.toLocalFile();
+    if (!url.isLocalFile()) { emit error("Only local files are supported."); return false; }
+    const QString path = localPath(url);
+    for (int index = 0; index < m_tabs.size(); ++index) {
+        if (m_tabs[index].path == path) { setCurrentIndex(index); return true; }
+    }
     QFile file(path);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) { emit error(file.errorString()); return false; }
-    State loaded{QString::fromUtf8(file.readAll()), path, false};
+    if (!file.open(QIODevice::ReadOnly)) { emit error(file.errorString()); return false; }
+    const QByteArray bytes = file.readAll();
+    if (file.error() != QFileDevice::NoError) { emit error(file.errorString()); return false; }
+    QStringDecoder decoder(QStringDecoder::Utf8);
+    QString text = decoder(bytes);
+    if (decoder.hasError() || text.contains(QChar::Null)) {
+        emit error("This file is not valid UTF-8 text."); return false;
+    }
+    const bool crlf = text.contains("\r\n");
+    text.replace("\r\n", "\n");
+    State loaded{text, path, false, crlf, bytes.startsWith("\xEF\xBB\xBF")};
     const auto &tab = current();
     if (tab.path.isEmpty() && tab.text.isEmpty() && !tab.modified) m_tabs[m_currentIndex] = loaded;
     else { m_tabs.append(loaded); m_currentIndex = m_tabs.size() - 1; }
@@ -56,16 +78,30 @@ bool Document::open(const QUrl &url) {
 
 bool Document::writeTo(const QString &path) {
     QSaveFile file(path);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) { emit error(file.errorString()); return false; }
-    file.write(current().text.toUtf8());
+    if (!file.open(QIODevice::WriteOnly)) { emit error(file.errorString()); return false; }
+    QString text = current().text;
+    if (current().crlf) text.replace("\n", "\r\n");
+    const QByteArray bytes = (current().utf8Bom ? QByteArray("\xEF\xBB\xBF") : QByteArray()) + text.toUtf8();
+    if (file.write(bytes) != bytes.size()) {
+        emit error(file.errorString()); file.cancelWriting(); return false;
+    }
     if (!file.commit()) { emit error(file.errorString()); return false; }
     current().path = path; current().modified = false;
-    notifyCurrent();
+    emit fileChanged(); emit modifiedChanged(); emit languageChanged(); emit tabsChanged();
     return true;
 }
 
 bool Document::save() { return current().path.isEmpty() ? false : writeTo(current().path); }
-bool Document::saveAs(const QUrl &url) { return writeTo(url.toLocalFile()); }
+bool Document::saveAs(const QUrl &url) {
+    if (!url.isLocalFile()) { emit error("Only local files are supported."); return false; }
+    const QString path = localPath(url);
+    for (int index = 0; index < m_tabs.size(); ++index) {
+        if (index != m_currentIndex && m_tabs[index].path == path) {
+            emit error("This file is already open in another tab."); return false;
+        }
+    }
+    return writeTo(path);
+}
 void Document::newFile() {
     const auto &tab = current();
     if (tab.path.isEmpty() && tab.text.isEmpty() && !tab.modified) return;

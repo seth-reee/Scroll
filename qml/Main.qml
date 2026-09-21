@@ -29,28 +29,57 @@ ApplicationWindow {
     }
     property bool lineWrapping: false
     property int pendingCloseTab: -1
+    property bool closingWindow: false
+    property bool syncingEditor: false
+
+    onClosing: function(event) {
+        for (let index = 0; index < document.tabs.length; ++index) {
+            if (document.tabModified(index)) {
+                event.accepted = false
+                closingWindow = true
+                document.currentIndex = index
+                requestCloseTab(index)
+                return
+            }
+        }
+    }
+
+    function continueClosing() {
+        if (closingWindow) Qt.callLater(function() { window.close() })
+    }
 
     function saveDocument() {
-        if (document.fileName === "Untitled") saveDialog.open()
+        if (!document.hasFile) saveDialog.open()
         else document.save()
     }
 
     function findNext() {
         if (findField.text.length === 0) return
-        let start = editor.cursorPosition
-        if (editor.selectedText === findField.text) start += findField.text.length
+        let start = editor.selectionEnd
         let position = editor.text.indexOf(findField.text, start)
         if (position < 0) position = editor.text.indexOf(findField.text, 0)
         if (position >= 0) {
             editor.select(position, position + findField.text.length)
-            editor.cursorPosition = position + findField.text.length
             editor.forceActiveFocus()
         }
     }
 
     function replaceCurrent() {
-        if (editor.selectedText === findField.text) editor.insert(editor.selectionStart, replaceField.text)
+        if (findField.text.length && editor.selectedText === findField.text) {
+            const start = editor.selectionStart
+            editor.remove(start, editor.selectionEnd)
+            editor.insert(start, replaceField.text)
+            editor.cursorPosition = start + replaceField.text.length
+        }
         findNext()
+    }
+
+    function replaceAll() {
+        if (!findField.text.length) return
+        const replacement = editor.text.split(findField.text).join(replaceField.text)
+        if (replacement === editor.text) return
+        editor.remove(0, editor.length)
+        editor.insert(0, replacement)
     }
 
     function toggleLineWrapping() {
@@ -85,13 +114,14 @@ ApplicationWindow {
 
     function saveAndCloseTab(index) {
         document.currentIndex = index
-        if (document.fileName === "Untitled") {
+        if (!document.hasFile) {
             pendingCloseTab = index
             closeTabDialog.close()
             saveDialog.open()
         } else if (document.save()) {
             document.closeTab(index, true)
             closeTabDialog.close()
+            continueClosing()
         }
     }
 
@@ -105,18 +135,24 @@ ApplicationWindow {
     }
     Platform.FileDialog {
         id: saveDialog
+        objectName: "saveDialog"
         title: "Save script"
         fileMode: Platform.FileDialog.SaveFile
         defaultSuffix: "txt"
         nameFilters: ["Text files (*.txt)", "All files (*)"]
         onAccepted: {
-            document.saveAs(file)
+            if (!document.saveAs(file)) {
+                window.pendingCloseTab = -1
+                window.closingWindow = false
+                return
+            }
             if (window.pendingCloseTab >= 0) {
                 document.closeTab(window.pendingCloseTab, true)
                 window.pendingCloseTab = -1
+                window.continueClosing()
             }
         }
-        onRejected: window.pendingCloseTab = -1
+        onRejected: { window.pendingCloseTab = -1; window.closingWindow = false }
     }
 
     header: Column {
@@ -181,10 +217,10 @@ ApplicationWindow {
         }
     }
 
-    Shortcut { sequence: StandardKey.Open; onActivated: openDialog.open() }
-    Shortcut { sequence: StandardKey.Save; onActivated: window.saveDocument() }
-    Shortcut { sequence: StandardKey.New; onActivated: document.newFile() }
-    Shortcut { sequence: StandardKey.Find; onActivated: findDialog.open() }
+    Shortcut { sequences: [StandardKey.Open]; onActivated: openDialog.open() }
+    Shortcut { sequences: [StandardKey.Save]; onActivated: window.saveDocument() }
+    Shortcut { sequences: [StandardKey.New]; onActivated: document.newFile() }
+    Shortcut { sequences: [StandardKey.Find]; onActivated: findDialog.open() }
 
     Menu {
         id: applicationMenu
@@ -199,6 +235,7 @@ ApplicationWindow {
     Rectangle {
         anchors.fill: parent; anchors.margins: 16
         color: omarchyTheme.panel
+        clip: true
         radius: 8
         border.color: omarchyTheme.surface
         border.width: 1
@@ -244,6 +281,9 @@ ApplicationWindow {
             flickableDirection: Flickable.AutoFlickIfNeeded
             contentWidth: editor.width
             contentHeight: editor.height
+            onContentYChanged: lineNumberModel.setViewport(contentY, height)
+            onHeightChanged: lineNumberModel.setViewport(contentY, height)
+            Component.onCompleted: lineNumberModel.setViewport(contentY, height)
             ScrollBar.vertical: ScrollBar {
                 id: verticalScrollBar
                 policy: ScrollBar.AsNeeded
@@ -259,12 +299,14 @@ ApplicationWindow {
 
             TextArea {
                 id: editor
+                objectName: "editor"
                 // Flickable owns the viewport; TextArea grows to its content inside it.
                 width: window.lineWrapping ? editorScroll.width : Math.max(editorScroll.width, implicitWidth)
                 height: Math.max(editorScroll.height, implicitHeight)
-                text: document.text
+                textFormat: TextEdit.PlainText
+                persistentSelection: true
                 onTextChanged: {
-                    if (activeFocus && text !== document.text) document.text = text
+                    if (!window.syncingEditor && text !== document.text) document.text = text
                     lineNumberModel.scheduleRefresh()
                 }
                 onWidthChanged: lineNumberModel.scheduleRefresh()
@@ -309,7 +351,7 @@ ApplicationWindow {
             Label { text: document.encoding; color: omarchyTheme.mutedForeground; font.pixelSize: 12 }
             Label { visible: settings.syntaxEnabled; text: document.language; color: omarchyTheme.mutedForeground; font.pixelSize: 12 }
             Item { Layout.fillWidth: true }
-            Label { text: document.text.split("\n").length + " lines · " + document.text.length + " chars"; color: omarchyTheme.mutedForeground; font.pixelSize: 12 }
+            Label { text: lineNumberModel.lineCount + " lines · " + editor.length + " chars"; color: omarchyTheme.mutedForeground; font.pixelSize: 12 }
             Button {
                 text: window.lineWrapping ? "Wrap: On" : "Wrap: Off"
                 onClicked: window.toggleLineWrapping()
@@ -317,7 +359,16 @@ ApplicationWindow {
         }
     }
 
-    Connections { target: document; function onError(message) { errorDialog.text = message; errorDialog.open() } }
+    Connections {
+        target: document
+        function onError(message) { errorDialog.text = message; errorDialog.open() }
+        function onTextChanged() {
+            if (editor.text === document.text) return
+            window.syncingEditor = true
+            editor.text = document.text
+            window.syncingEditor = false
+        }
+    }
     Connections {
         target: settings
         function onSyntaxEnabledChanged() { syntaxHighlighter.setEnabled(settings.syntaxEnabled) }
@@ -368,6 +419,8 @@ ApplicationWindow {
 
     Dialog {
         id: closeTabDialog
+        objectName: "closeTabDialog"
+        closePolicy: Popup.NoAutoClose
         property int tabIndex: -1
         title: "Unsaved changes"
         modal: true
@@ -382,11 +435,11 @@ ApplicationWindow {
             }
             RowLayout {
                 Layout.fillWidth: true
-                Button { text: "Cancel"; onClicked: closeTabDialog.close() }
+                Button { text: "Cancel"; onClicked: { window.closingWindow = false; closeTabDialog.close() } }
                 Item { Layout.fillWidth: true }
                 Button {
                     text: "Discard"
-                    onClicked: { document.closeTab(closeTabDialog.tabIndex, true); closeTabDialog.close() }
+                    onClicked: { document.closeTab(closeTabDialog.tabIndex, true); closeTabDialog.close(); window.continueClosing() }
                 }
                 Button { text: "Save"; onClicked: window.saveAndCloseTab(closeTabDialog.tabIndex) }
             }
@@ -399,18 +452,18 @@ ApplicationWindow {
         background: Rectangle { color: omarchyTheme.panel; border.color: omarchyTheme.surface; radius: 8 }
         ColumnLayout {
             width: parent.width; spacing: 10
-            TextField { id: findField; Layout.fillWidth: true; placeholderText: "Find"; color: omarchyTheme.foreground; selectByMouse: true; onAccepted: window.findNext() }
-            TextField { id: replaceField; Layout.fillWidth: true; placeholderText: "Replace with"; color: omarchyTheme.foreground; selectByMouse: true; onAccepted: window.replaceCurrent() }
+            TextField { id: findField; objectName: "findField"; Layout.fillWidth: true; placeholderText: "Find"; color: omarchyTheme.foreground; selectByMouse: true; onAccepted: window.findNext() }
+            TextField { id: replaceField; objectName: "replaceField"; Layout.fillWidth: true; placeholderText: "Replace with"; color: omarchyTheme.foreground; selectByMouse: true; onAccepted: window.replaceCurrent() }
             RowLayout {
                 Layout.fillWidth: true
                 Button { text: "Find next"; onClicked: window.findNext() }
                 Button { text: "Replace"; onClicked: window.replaceCurrent() }
-                Button { text: "Replace all"; onClicked: { if (findField.text.length) editor.text = editor.text.split(findField.text).join(replaceField.text) } }
+                Button { text: "Replace all"; onClicked: window.replaceAll() }
             }
         }
         onOpened: findField.forceActiveFocus()
     }
-    Dialog { id: errorDialog; property alias text: errorLabel.text; title: "Couldn’t read or write file"; modal: true; standardButtons: Dialog.Ok
+    Dialog { id: errorDialog; width: 360; property alias text: errorLabel.text; title: "Couldn’t read or write file"; modal: true; standardButtons: Dialog.Ok
         Label { id: errorLabel; color: omarchyTheme.foreground; wrapMode: Text.Wrap; width: 320 }
     }
 }

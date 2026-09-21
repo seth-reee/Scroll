@@ -31,6 +31,18 @@ void LineNumberModel::setEditorDocument(QQuickTextDocument *document) {
     m_document = document ? document->textDocument() : nullptr;
     if (m_document)
         connect(m_document, &QTextDocument::contentsChanged, this, &LineNumberModel::scheduleRefresh);
+    if (m_document)
+        connect(m_document, &QTextDocument::blockCountChanged, this, &LineNumberModel::lineCountChanged);
+    emit lineCountChanged();
+    scheduleRefresh();
+}
+
+int LineNumberModel::lineCount() const { return m_document ? m_document->blockCount() : 1; }
+
+void LineNumberModel::setViewport(qreal top, qreal height) {
+    if (m_viewportTop == top && m_viewportHeight == height) return;
+    m_viewportTop = top;
+    m_viewportHeight = height;
     scheduleRefresh();
 }
 
@@ -44,8 +56,15 @@ void LineNumberModel::refresh() {
     beginResetModel();
     m_rows.clear();
     if (m_document && m_document->documentLayout()) {
-        for (QTextBlock block = m_document->begin(); block.isValid(); block = block.next()) {
+        const qreal top = qMax(qreal(0), m_viewportTop - 40);
+        const qreal bottom = m_viewportTop + m_viewportHeight + 40;
+        const int position = m_document->documentLayout()->hitTest(QPointF(0, top), Qt::FuzzyHit);
+        QTextBlock first = m_document->findBlock(qMax(0, position));
+        if (first.previous().isValid()) first = first.previous();
+        for (QTextBlock block = first; block.isValid(); block = block.next()) {
             const auto bounds = m_document->documentLayout()->blockBoundingRect(block);
+            if (bounds.top() > bottom) break;
+            if (bounds.bottom() < top) continue;
             const auto *layout = block.layout();
             if (!layout || layout->lineCount() == 0) {
                 m_rows.append({block.blockNumber() + 1, bounds.top(), bounds.height()});
@@ -53,6 +72,8 @@ void LineNumberModel::refresh() {
             }
             for (int i = 0; i < layout->lineCount(); ++i) {
                 const QTextLine line = layout->lineAt(i);
+                if (bounds.top() + line.y() + line.height() < top) continue;
+                if (bounds.top() + line.y() > bottom) break;
                 // Continuation rows have number 0, which QML renders as a gap.
                 m_rows.append({i == 0 ? block.blockNumber() + 1 : 0,
                                bounds.top() + line.y(), line.height()});

@@ -11,6 +11,7 @@ class Document : public QObject {
     Q_PROPERTY(QString filePath READ filePath NOTIFY fileChanged)
     Q_PROPERTY(QString directoryPath READ directoryPath NOTIFY fileChanged)
     Q_PROPERTY(bool modified READ modified NOTIFY modifiedChanged)
+    Q_PROPERTY(bool hasFile READ hasFile NOTIFY fileChanged)
     Q_PROPERTY(QString language READ language NOTIFY languageChanged)
     Q_PROPERTY(QString encoding READ encoding CONSTANT)
     Q_PROPERTY(QVariantList tabs READ tabs NOTIFY tabsChanged)
@@ -23,6 +24,7 @@ public:
     QString filePath() const;
     QString directoryPath() const;
     bool modified() const;
+    bool hasFile() const { return !current().path.isEmpty(); }
     QString language() const;
     QString encoding() const { return QStringLiteral("UTF-8"); }
     QVariantList tabs() const;
@@ -47,7 +49,13 @@ signals:
     void error(const QString &message);
 
 private:
-    struct State { QString text; QString path; bool modified = false; };
+    struct State {
+        QString text;
+        QString path;
+        bool modified = false;
+        bool crlf = false;
+        bool utf8Bom = false;
+    };
     State &current();
     const State &current() const;
     void notifyCurrent();

@@ -39,6 +39,17 @@ cmake --build build
 
 The build output is intentionally ignored by Git. If `build/` does not exist, rerun the configure command above before building.
 
+Run the regression tests after building:
+
+```bash
+ctest --test-dir build --output-on-failure
+```
+
+Tests exercise file safety, unsaved-window protection, save failures, find/replace,
+tab synchronization, and viewport-sized gutters with a 20,000-line document.
+They run headlessly with Qt's offscreen platform. Use `-DBUILD_TESTING=OFF` when
+configuring a build that does not need the tests or the Qt Test component.
+
 ## AppImage build
 
 An x86_64 AppImage recipe is provided in `packaging/build-appimage.sh` and has been tested in a Debian Trixie Distrobox. Install the Qt 6 development packages, `cmake`, `ninja-build`, and `patchelf` in the build container, then place the current x86_64 LinuxDeploy and LinuxDeploy Qt plugin AppImages in `.appimage-tools/`.

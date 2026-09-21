@@ -33,3 +33,18 @@ target_link_libraries(qomaedit PRIVATE Qt6::Quick Qt6::QuickControls2 Qt6::Widge
 target_compile_definitions(qomaedit PRIVATE QOMAEDIT_VERSION="${PROJECT_VERSION}")
 
 install(TARGETS qomaedit)
+
+include(CTest)
+if(BUILD_TESTING)
+    find_package(Qt6 6.5 REQUIRED COMPONENTS Test)
+    qt_add_executable(editor_tests
+        tests/editor_tests.cpp
+        src/document.cpp src/linenumbermodel.cpp src/settings.cpp
+        src/syntaxhighlighter.cpp src/theme.cpp
+    )
+    target_include_directories(editor_tests PRIVATE src)
+    target_link_libraries(editor_tests PRIVATE Qt6::Test Qt6::Quick Qt6::QuickControls2 Qt6::Widgets)
+    target_compile_definitions(editor_tests PRIVATE MAIN_QML="${CMAKE_CURRENT_SOURCE_DIR}/qml/Main.qml")
+    add_test(NAME editor_tests COMMAND editor_tests)
+    set_tests_properties(editor_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+endif()
