@@ -16,11 +16,16 @@ add_library(editor_core STATIC
 target_include_directories(editor_core PUBLIC src)
 target_link_libraries(editor_core PUBLIC Qt6::Widgets)
 qt_add_executable(qomaedit src/main.cpp)
+qt_add_resources(qomaedit "qomaedit_resources"
+    PREFIX "/"
+    FILES resources/qomaedit.png
+)
 target_link_libraries(qomaedit PRIVATE editor_core)
 target_compile_definitions(qomaedit PRIVATE QOMAEDIT_VERSION="${PROJECT_VERSION}")
 install(TARGETS qomaedit RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES packaging/qomaedit.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
 install(FILES packaging/qomaedit.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
+install(FILES resources/qomaedit.png DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps)
 install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/qomaedit)
 
 include(CTest)

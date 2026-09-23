@@ -79,7 +79,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_tabs(new QTabWi
     action(tr("Previous tab"), QKeySequence::PreviousChild, [this] { setCurrentIndex((m_tabs->currentIndex() + tabCount() - 1) % tabCount()); });
     menu->addSeparator();
     action(tr("About qOmaedit"), {}, [this] {
-        QMessageBox::about(this, tr("About qOmaedit"), tr("qOmaedit %1<br>Licensed under the MIT License.<br><a href=\"https://github.com/seth-reee/qOmaedit\">GitHub repository</a>").arg(qApp->applicationVersion()));
+        QMessageBox about(this);
+        about.setWindowTitle(tr("About qOmaedit"));
+        about.setTextFormat(Qt::RichText);
+        about.setText(tr("qOmaedit %1<br>Licensed under the MIT License.<br><a href=\"https://github.com/seth-reee/qOmaedit\">GitHub repository</a>").arg(qApp->applicationVersion()));
+        about.setIconPixmap(qApp->windowIcon().pixmap(64, 64));
+        about.exec();
     });
 
     auto *settings = new QPushButton(tr("Settings"), this);

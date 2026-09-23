@@ -2,6 +2,7 @@
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QDir>
+#include <QIcon>
 #include <QTimer>
 #include <QUrl>
 
@@ -11,6 +12,7 @@ int main(int argc, char *argv[]) {
     app.setApplicationName("qOmaedit");
     app.setApplicationVersion(QOMAEDIT_VERSION);
     app.setDesktopFileName("qomaedit");
+    app.setWindowIcon(QIcon(":/qomaedit.png"));
     QCommandLineParser parser;
     parser.setApplicationDescription("A lightweight plain-text editor for Omarchy");
     parser.addHelpOption();
