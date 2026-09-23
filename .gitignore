@@ -1,7 +1,3 @@
 /build/
 /build-release/
-.appimage-tools/
-/build-appimage/
-/AppDir/
 /dist/
-/.qmlls.ini

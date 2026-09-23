@@ -1,0 +1,30 @@
+qOmaedit native installation (Arch Linux x86_64)
+
+Prefer the pacman package:
+  sudo pacman -U qomaedit-*.pkg.tar.zst
+
+For the manual binary tarball, install system runtime dependencies:
+  sudo pacman -S --needed qt6-base
+For native Wayland support:
+  sudo pacman -S --needed qt6-wayland
+
+From the extracted binary tarball directory:
+  sudo install -Dm755 usr/bin/qomaedit /usr/bin/qomaedit
+  sudo install -Dm644 usr/share/applications/qomaedit.desktop /usr/share/applications/qomaedit.desktop
+  sudo install -Dm644 usr/share/icons/hicolor/scalable/apps/qomaedit.svg /usr/share/icons/hicolor/scalable/apps/qomaedit.svg
+  sudo install -Dm644 usr/share/licenses/qomaedit/LICENSE /usr/share/licenses/qomaedit/LICENSE
+  sudo update-desktop-database /usr/share/applications
+  sudo gtk-update-icon-cache -f -t /usr/share/icons/hicolor
+
+Run qomaedit as your normal desktop user. These binaries use Arch's system Qt
+libraries; they are not standalone or intended for other distributions.
+Do not mix manual installation with a pacman-managed installation.
+
+The package does not change your default editor or file associations. Choose
+qOmaedit using your file manager's Open With settings if desired.
+
+A development symlink at ~/.local/bin/qomaedit takes precedence over /usr/bin
+when ~/.local/bin appears first in PATH. A user launcher with the same desktop
+ID also takes precedence over the packaged launcher. Keep these if you want to
+run your local development build; remove them yourself when switching to the
+packaged version. User settings in ~/.config/qOmaedit are preserved on upgrades.

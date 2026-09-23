@@ -89,9 +89,9 @@ native desktop measurements.
 - The widget UI was rendered and visually inspected. Native Wayland launches
   and file loading were exercised by the memory benchmark. Interactive native
   file-picker behavior and Qt 6.5 still need platform testing.
-- The AppImage recipe removes the QML source setting and disables test builds. Its
-  shell syntax was checked, but an AppImage was not rebuilt: the LinuxDeploy tools
-  are not present here. Debian-specific Wayland plugin paths remain in the recipe.
+- Native Arch packaging installs the executable, desktop entry, icon, and license
+  through CMake. The package builder runs the tests and generates a pacman package,
+  manual binary tarball, and checksummed source recipe; see README.md.
 - Loading still temporarily holds the input bytes and decoded text before
   QPlainTextEdit takes ownership of its copy. Huge single lines and larger files
   can still be expensive; this is not a memory-mapped editor.

@@ -76,17 +76,43 @@ This opens temporary test windows and closes only the processes it launches.
 User editor settings are isolated; no installation or desktop settings are changed.
 See [REVIEW.md](REVIEW.md) for measured results and limitations.
 
-## AppImage build
+## Native Linux packages
 
-An x86_64 AppImage recipe is provided in `packaging/build-appimage.sh` and has been tested in a Debian Trixie Distrobox. Install the Qt 6 development packages, `cmake`, `ninja-build`, and `patchelf` in the build container, then place the current x86_64 LinuxDeploy and LinuxDeploy Qt plugin AppImages in `.appimage-tools/`.
+Like [omamounter](https://github.com/seth-reee/omamounter), qOmaedit ships as an
+Arch Linux x86_64 pacman package and a manual binary tarball. Qt is a system
+dependency. The package installs the executable, application-menu entry, SVG
+icon, and MIT license in the standard `/usr` directories.
 
-Run:
+Build the packages on Arch/Omarchy as your normal user:
 
 ```bash
-./packaging/build-appimage.sh
+sudo pacman -S --needed base-devel cmake ninja qt6-base desktop-file-utils
+./packaging/build-package.sh
 ```
 
-The finished portable application is written to `dist/qOmaedit-x86_64.AppImage`. It includes native Wayland support for Omarchy/Hyprland and an X11 fallback.
+The builder requires a clean Git checkout and packages the current commit. It
+runs the regression tests and validates the desktop entry before producing:
+
+- `dist/qomaedit-0.2.1-1-x86_64.pkg.tar.zst` — native pacman package.
+- `dist/qomaedit-0.2.1-linux-x86_64.tar.gz` — manual binary installation with `INSTALL.txt`.
+- `dist/qomaedit-0.2.1.tar.gz` — versioned source archive.
+- `dist/PKGBUILD`, `dist/.SRCINFO`, and `dist/SHA256SUMS` — checksummed recipe and package metadata.
+
+Install the native package with:
+
+```bash
+sudo pacman -U dist/qomaedit-0.2.1-1-x86_64.pkg.tar.zst
+```
+
+For native Wayland support, install the optional `qt6-wayland` dependency. Pacman
+handles launcher/icon cache updates through the system's hooks. The package does
+not alter user settings or default-editor associations. For manual installation,
+follow the included [INSTALL.txt](packaging/INSTALL.txt).
+
+The existing development setup (`~/.local/bin/qomaedit` linked to `build/qomaedit`)
+continues to use the latest local build. That symlink and a user-level desktop
+entry take precedence over the installed package. Building packages does not
+install them or replace these development links.
 
 ## Current scope
 
