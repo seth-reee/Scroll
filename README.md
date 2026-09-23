@@ -1,4 +1,4 @@
-# qOmaedit
+<h1><img src="resources/qomaedit.png" width="56" alt="qOmaedit icon" align="absmiddle"> qOmaedit</h1>
 
 qOmaedit is a small Qt 6 Widgets text editor for scripts and other plain-text files on Omarchy. It uses QPlainTextEdit, keeps one text document per tab, and paints highlighting and line numbers only around the viewport. No QML runtime or Qt Quick scene graph is needed.
 
