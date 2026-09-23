@@ -1,131 +1,124 @@
-<h1><img src="resources/qomaedit.png" width="56" alt="qOmaedit icon" align="absmiddle"> qOmaedit</h1>
+# <img src="resources/qomaedit.png" width="48" height="48" alt=""> qOmaedit
 
-qOmaedit is a small Qt 6 Widgets text editor for scripts and other plain-text files on Omarchy. It uses QPlainTextEdit, keeps one text document per tab, and paints highlighting and line numbers only around the viewport. No QML runtime or Qt Quick scene graph is needed.
-
-Repository: [github.com/seth-reee/qOmaedit](https://github.com/seth-reee/qOmaedit)
+A lightweight text editor for scripts and plain-text files on [Omarchy](https://omarchy.org/), built with Qt 6 Widgets. qOmaedit follows your desktop theme and keeps everyday editing simple.
 
 ## Features
 
-- Open, create, and safely save UTF-8 text files.
-- Opens files passed from the desktop file manager or command line; multiple files open in tabs.
-- Close saved tabs directly from the close control beside each tab name.
-- Uses the system/platform file picker for Open and Save As; Open defaults to an all-files filter.
-- Standard `Ctrl+N`, `Ctrl+O`, `Ctrl+S`, and `Ctrl+F` shortcuts.
-- Compact header Menu for New, Open, Save, Find and replace, and About.
-- About dialog with version, repository link, and license information.
-- Find next, replace, and replace all.
-- Independent undo history, cursor position, selection, and scrolling in each tab. Replace All is a single undoable operation.
-- Automatic scrolling to keep the insertion point visible while typing.
-- Line-number gutter that keeps source-line numbers aligned when visual wrapping is enabled; wrapped continuation rows are left blank.
-- Footer `Wrap: On/Off` control. Wrapping is display-only: it never inserts newlines, so copied and saved text is unchanged.
-- Optional visual guides before wrapped continuation lines, controlled in Settings and never written to the file.
-- Mouse-wheel scrolling and draggable vertical/horizontal scrollbars. The horizontal bar hides while wrapping is on.
-- Lightweight highlighting for common shell, Python, Lua, and JavaScript-like comments, strings, numbers, and keywords.
-- Exceptionally long physical lines (over 32,768 characters) remain editable but skip syntax coloring to bound formatting work. Large files with normal-length lines remain highlighted.
-- Live Omarchy palette support. qOmaedit reads `~/.local/state/omarchy/current/theme/colors.toml` and updates its colors after a theme switch without displaying the theme name.
+- **Tabbed editing** with independent undo history, cursor position, and scrolling for each document.
+- **Find and replace**, including Replace All as a single undoable action.
+- **Syntax highlighting** for common shell, Python, Lua, and JavaScript constructs.
+- **Line numbers and optional word wrapping**, with visual guides for wrapped lines. Wrapping never changes the file contents.
+- **Live theme updates** when you switch your Omarchy theme.
+- **UTF-8 file support**, unsaved-change prompts, and desktop file-manager integration.
 
-## Build and run
+## Installation
 
-On Arch/Omarchy, install the build tools and Qt packages if necessary:
+Native packages target **Arch Linux / Omarchy on x86_64** and use the system Qt libraries.
+
+Download a `.pkg.tar.zst` package from [Releases](https://github.com/seth-reee/qOmaedit/releases), then install it from your download directory:
 
 ```bash
-sudo pacman -S --needed cmake ninja qt6-base
+sudo pacman -U ./qomaedit-*.pkg.tar.zst
 ```
 
-Configure, build, and run:
+For native Wayland support:
 
 ```bash
+sudo pacman -S --needed qt6-wayland
+```
+
+Launch **qOmaedit** from your application menu, or open files from a terminal:
+
+```bash
+qomaedit script.sh notes.md
+```
+
+The package includes the application, desktop entry, icon, and license. It does not change your default editor or file associations. To associate a file type with qOmaedit, use your file manager's **Open With** settings.
+
+For manual installation from a binary tarball, follow the included [installation instructions](packaging/INSTALL.txt). These binaries require Arch's system libraries.
+
+## Usage
+
+Use the **Menu** button for file actions, Find and Replace, and About. Open **Settings** to adjust editor preferences, or use the **Wrap** button in the footer to toggle word wrapping.
+
+| Shortcut | Action |
+| --- | --- |
+| `Ctrl+N` | New document |
+| `Ctrl+O` | Open files |
+| `Ctrl+S` | Save |
+| `Ctrl+F` | Find and replace |
+
+Syntax highlighting is intentionally lightweight rather than a full language parser. Lines longer than 32,768 characters remain editable but skip highlighting to keep formatting work bounded.
+
+## Development
+
+### Build from source
+
+Install the build dependencies on Arch / Omarchy:
+
+```bash
+sudo pacman -S --needed base-devel cmake ninja qt6-base git
+```
+
+Clone the repository, then configure and build:
+
+```bash
+git clone https://github.com/seth-reee/qOmaedit.git
+cd qOmaedit
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ./build/qomaedit
 ```
 
-The build output is intentionally ignored by Git. If `build/` does not exist, rerun the configure command above before building.
+The application requires Qt 6.5 or later. Tests are enabled by default; add `-DBUILD_TESTING=OFF` when configuring to build without them.
 
-Run the regression tests after building:
+### Tests
 
 ```bash
 ctest --test-dir build --output-on-failure
 ```
 
-Tests exercise file safety, unsaved-window protection, save failures, find/replace,
-per-tab undo, automatic scrolling, and bounded highlighting with a 20,000-line document.
-They run headlessly with Qt's offscreen platform. Use `-DBUILD_TESTING=OFF` when
-configuring a build that does not need the tests or the Qt Test component.
+The regression suite runs headlessly and covers file handling, unsaved changes, find and replace, per-tab undo, scrolling, and highlighting in large documents.
 
-For a repeatable Linux memory measurement of the compiled app:
+### Packaging
+
+From a clean, committed checkout, run the package builder as your normal user:
+
+```bash
+sudo pacman -S --needed desktop-file-utils
+./packaging/build-package.sh
+```
+
+The builder packages the current Git commit, runs the tests, and validates the desktop entry. Outputs are written to `dist/`:
+
+- An Arch Linux package (`.pkg.tar.zst`).
+- A binary tarball with manual installation instructions.
+- A versioned source archive.
+- The package recipe, metadata, and SHA-256 checksums.
+
+Building a package does not install it. If you previously created a development launcher or a symlink in `~/.local/bin`, it may take precedence over the packaged application; see the [installation notes](packaging/INSTALL.txt).
+
+### Performance profiling
+
+An optional Linux probe measures memory and CPU usage with generated files:
 
 ```bash
 cmake --build build --target profile_memory
 ./build/profile_memory ./build/qomaedit
 ```
 
-This optional Linux probe uses fresh processes, isolated settings, syntax
-highlighting, and generated JavaScript files of up to 100,000 lines. It reports
-RSS/PSS after an eight-second warmup and samples CPU for one second. Active
-processes are flagged so that you can rerun with a longer `--settle-ms`.
-The default uses Qt's offscreen backend; a live desktop changes memory usage.
-
-For a comparison with installed KWrite and gedit on the same desktop:
+The default measurement uses Qt's offscreen backend and isolated settings. To compare with installed KWrite and gedit on your desktop:
 
 ```bash
 ./build/profile_memory --desktop --compare --repeats 2 ./build/qomaedit
 ```
 
-This opens temporary test windows and closes only the processes it launches.
-User editor settings are isolated; no installation or desktop settings are changed.
-See [REVIEW.md](REVIEW.md) for measured results and limitations.
-
-## Native Linux packages
-
-Like [omamounter](https://github.com/seth-reee/omamounter), qOmaedit ships as an
-Arch Linux x86_64 pacman package and a manual binary tarball. Qt is a system
-dependency. The package installs the executable, application-menu entry, SVG
-icon, and MIT license in the standard `/usr` directories.
-
-Build the packages on Arch/Omarchy as your normal user:
-
-```bash
-sudo pacman -S --needed base-devel cmake ninja qt6-base desktop-file-utils
-./packaging/build-package.sh
-```
-
-The builder requires a clean Git checkout and packages the current commit. It
-runs the regression tests and validates the desktop entry before producing:
-
-- `dist/qomaedit-0.2.1-1-x86_64.pkg.tar.zst` — native pacman package.
-- `dist/qomaedit-0.2.1-linux-x86_64.tar.gz` — manual binary installation with `INSTALL.txt`.
-- `dist/qomaedit-0.2.1.tar.gz` — versioned source archive.
-- `dist/PKGBUILD`, `dist/.SRCINFO`, and `dist/SHA256SUMS` — checksummed recipe and package metadata.
-
-Install the native package with:
-
-```bash
-sudo pacman -U dist/qomaedit-0.2.1-1-x86_64.pkg.tar.zst
-```
-
-For native Wayland support, install the optional `qt6-wayland` dependency. Pacman
-handles launcher/icon cache updates through the system's hooks. The package does
-not alter user settings or default-editor associations. For manual installation,
-follow the included [INSTALL.txt](packaging/INSTALL.txt).
-
-The existing development setup (`~/.local/bin/qomaedit` linked to `build/qomaedit`)
-continues to use the latest local build. That symlink and a user-level desktop
-entry take precedence over the installed package. Building packages does not
-install them or replace these development links.
-
-## Current scope
-
-qOmaedit supports multiple open documents through its tab bar. Richer language-specific highlighting and editor features are natural future additions.
-
-## License
-
-qOmaedit is licensed under the MIT License.
-
-You are free to use, modify, distribute, and use qOmaedit commercially, provided that the original copyright and license notices are preserved.
-
-See [LICENSE](LICENSE) for details.
+The desktop comparison opens temporary test windows. See [REVIEW.md](REVIEW.md) for results, methodology, and limitations.
 
 ## Contributing
 
-Contributions are welcome. If you improve qOmaedit and would like to help the project, please open a pull request upstream. You are not required to publish or contribute your modifications; the MIT License only requires that copyright and license notices are preserved.
+Bug reports and pull requests are welcome. For code changes, include relevant tests and run the regression suite before submitting.
+
+## License
+
+qOmaedit is available under the [MIT License](LICENSE).
