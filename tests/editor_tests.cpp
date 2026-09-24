@@ -2,6 +2,7 @@
 #include "mainwindow.h"
 #include "syntaxhighlighter.h"
 #include "theme.h"
+#include <QAction>
 #include <QApplication>
 #include <QElapsedTimer>
 #include <QFile>
@@ -35,6 +36,15 @@ class EditorTests : public QObject {
         return QUrl::fromLocalFile(output.fileName());
     }
 private slots:
+    void branding() {
+        TestWindow window;
+        QVERIFY(window.windowTitle().endsWith(" — Scroll"));
+        bool foundAbout = false;
+        for (const auto *action : window.actions())
+            foundAbout |= action->text() == "About Scroll";
+        QVERIFY(foundAbout);
+    }
+
     void aboutLicenseBundled() {
         QFile license(":/LICENSE");
         QVERIFY(license.open(QIODevice::ReadOnly));

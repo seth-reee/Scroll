@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
     QCoreApplication app(argc, argv);
     QCommandLineParser parser;
     parser.addHelpOption();
-    parser.addPositionalArgument("executable", "Path to the qomaedit executable");
+    parser.addPositionalArgument("executable", "Path to the scroll executable");
     parser.addOption({"desktop", "Use the live desktop instead of Qt's offscreen backend (opens test windows)"});
     parser.addOption({"compare", "Also measure installed KWrite and gedit; requires --desktop"});
     parser.addOption({"repeats", "Repeat with rotated application order (1 to 5)", "count", "1"});
@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
     const int settle = parser.value("settle-ms").toInt();
     if (parser.positionalArguments().size() != 1 || repeats < 1 || repeats > 5 || settle < 1000
         || (parser.isSet("compare") && !parser.isSet("desktop"))) parser.showHelp(1);
-    QStringList names{"qOmaedit"};
+    QStringList names{"Scroll"};
     QStringList programs{parser.positionalArguments().first()};
     if (parser.isSet("compare")) {
         for (const QString &name : {QStringLiteral("kwrite"), QStringLiteral("gedit")}) {
@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
                 const int index = (offset + run) % programs.size();
                 QTemporaryDir profile;
                 if (!profile.isValid()) return 1;
-                QSettings settings(profile.filePath("config/qOmaedit/qOmaedit.conf"), QSettings::IniFormat);
+                QSettings settings(profile.filePath("config/Scroll/Scroll.conf"), QSettings::IniFormat);
                 settings.setValue("editor/syntaxEnabled", true);
                 settings.setValue("editor/tabsEnabled", true);
                 settings.sync();

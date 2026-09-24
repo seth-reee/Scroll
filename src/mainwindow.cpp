@@ -81,9 +81,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_tabs(new QTabWi
     action(tr("Next tab"), QKeySequence::NextChild, [this] { setCurrentIndex((m_tabs->currentIndex() + 1) % tabCount()); });
     action(tr("Previous tab"), QKeySequence::PreviousChild, [this] { setCurrentIndex((m_tabs->currentIndex() + tabCount() - 1) % tabCount()); });
     menu->addSeparator();
-    action(tr("About qOmaedit"), {}, [this] {
+    action(tr("About Scroll"), {}, [this] {
         QDialog dialog(this);
-        dialog.setWindowTitle(tr("About qOmaedit"));
+        dialog.setWindowTitle(tr("About Scroll"));
         dialog.resize(580, 440);
         auto *layout = new QVBoxLayout(&dialog);
         layout->setContentsMargins(20, 20, 20, 20);
@@ -92,7 +92,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_tabs(new QTabWi
         auto *icon = new QLabel;
         icon->setPixmap(qApp->windowIcon().pixmap(72, 72));
         layout->addWidget(icon);
-        auto *heading = new QLabel(tr("qOmaedit %1").arg(qApp->applicationVersion()));
+        auto *heading = new QLabel(tr("Scroll %1").arg(qApp->applicationVersion()));
         QFont font = heading->font();
         font.setPointSize(17);
         font.setBold(true);
@@ -238,7 +238,7 @@ void MainWindow::refreshTab(CodeEditor *edit) {
 void MainWindow::refreshStatus() {
     if (!editor()) return;
     const auto *edit = editor();
-    setWindowTitle((edit->document()->isModified() ? QStringLiteral("● ") : QString()) + edit->fileName() + " — qOmaedit");
+    setWindowTitle((edit->document()->isModified() ? QStringLiteral("● ") : QString()) + edit->fileName() + " — Scroll");
     const QString path = edit->filePath().isEmpty() ? tr("Untitled") : (m_settings.tabsEnabled() ? QFileInfo(edit->filePath()).absolutePath() : edit->filePath());
     m_path->setText(path);
     m_path->setToolTip(edit->filePath());

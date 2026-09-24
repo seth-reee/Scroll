@@ -8,11 +8,11 @@
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
-    app.setOrganizationName("qOmaedit");
-    app.setApplicationName("qOmaedit");
-    app.setApplicationVersion(QOMAEDIT_VERSION);
-    app.setDesktopFileName("qomaedit");
-    app.setWindowIcon(QIcon(":/qomaedit.png"));
+    app.setOrganizationName("Scroll");
+    app.setApplicationName("Scroll");
+    app.setApplicationVersion(SCROLL_VERSION);
+    app.setDesktopFileName("scroll");
+    app.setWindowIcon(QIcon(":/scroll.png"));
     QCommandLineParser parser;
     parser.setApplicationDescription("A lightweight plain-text editor for Omarchy");
     parser.addHelpOption();

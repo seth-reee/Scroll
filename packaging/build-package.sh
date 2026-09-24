@@ -20,19 +20,19 @@ if [[ "$(uname -m)" != x86_64 ]]; then
   exit 1
 fi
 
-version="$(sed -n 's/^project(qOmaedit VERSION \([^ ]*\) .*/\1/p' CMakeLists.txt)"
+version="$(sed -n 's/^project(Scroll VERSION \([^ ]*\) .*/\1/p' CMakeLists.txt)"
 [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Cannot determine project version.' >&2; exit 1; }
 output_dir="$project_dir/dist"
 mkdir -p "$output_dir"
-work_dir="$(mktemp -d -t qomaedit-package.XXXXXXXX)"
+work_dir="$(mktemp -d -t scroll-package.XXXXXXXX)"
 # Only this newly-created temporary build directory is removed on exit.
 trap 'rm -rf -- "$work_dir"' EXIT
 export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
 export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-4}"
 export PKGDEST="$output_dir"
 
-source_name="qomaedit-$version.tar.gz"
-git archive --format=tar --prefix="qomaedit-$version/" HEAD | gzip -n > "$output_dir/$source_name"
+source_name="scroll-$version.tar.gz"
+git archive --format=tar --prefix="scroll-$version/" HEAD | gzip -n > "$output_dir/$source_name"
 source_sha="$(sha256sum "$output_dir/$source_name")"
 source_sha="${source_sha%% *}"
 sed -e "s/@VERSION@/$version/g" -e "s/@SOURCE_SHA256@/$source_sha/g" \
@@ -46,7 +46,7 @@ makepkg --printsrcinfo > "$output_dir/.SRCINFO"
 mapfile -t packages < <(makepkg --packagelist)
 [[ ${#packages[@]} == 1 && -f "${packages[0]}" ]] || { echo 'Expected exactly one built package.' >&2; exit 1; }
 
-bundle_name="qomaedit-$version-linux-x86_64"
+bundle_name="scroll-$version-linux-x86_64"
 mkdir "$work_dir/$bundle_name"
 bsdtar -xf "${packages[0]}" -C "$work_dir/$bundle_name" usr
 install -m644 "$project_dir/packaging/INSTALL.txt" "$work_dir/$bundle_name/INSTALL.txt"

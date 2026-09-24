@@ -1,6 +1,6 @@
-# <img src="resources/qomaedit.png" width="48" height="48" alt=""> qOmaedit
+# <img src="resources/scroll.png" width="48" height="48" alt=""> Scroll
 
-A lightweight text editor for scripts and plain-text files on [Omarchy](https://omarchy.org/), built with Qt 6 Widgets. qOmaedit follows your desktop theme and keeps everyday editing simple.
+A lightweight text editor for scripts and plain-text files on [Omarchy](https://omarchy.org/), built with Qt 6 Widgets. Scroll follows your desktop theme and keeps everyday editing simple.
 
 ## Features
 
@@ -15,10 +15,10 @@ A lightweight text editor for scripts and plain-text files on [Omarchy](https://
 
 Native packages target **Arch Linux / Omarchy on x86_64** and use the system Qt libraries.
 
-Download a `.pkg.tar.zst` package from [Releases](https://github.com/seth-reee/qOmaedit/releases), then install it from your download directory:
+Download a `.pkg.tar.zst` package from [Releases](https://github.com/seth-reee/Scroll/releases), then install it from your download directory:
 
 ```bash
-sudo pacman -U ./qomaedit-*.pkg.tar.zst
+sudo pacman -U ./scroll-*.pkg.tar.zst
 ```
 
 For native Wayland support:
@@ -27,13 +27,13 @@ For native Wayland support:
 sudo pacman -S --needed qt6-wayland
 ```
 
-Launch **qOmaedit** from your application menu, or open files from a terminal:
+Launch **Scroll** from your application menu, or open files from a terminal:
 
 ```bash
-qomaedit script.sh notes.md
+scroll script.sh notes.md
 ```
 
-The package includes the application, desktop entry, icon, and license. It does not change your default editor or file associations. To associate a file type with qOmaedit, use your file manager's **Open With** settings.
+The package includes the application, desktop entry, icon, and license. It replaces the qOmaedit package. To associate a file type with Scroll, use your file manager's **Open With** settings. Scroll saves preferences in `~/.config/Scroll/Scroll.conf`.
 
 For manual installation from a binary tarball, follow the included [installation instructions](packaging/INSTALL.txt). These binaries require Arch's system libraries.
 
@@ -63,11 +63,11 @@ sudo pacman -S --needed base-devel cmake ninja qt6-base git
 Clone the repository, then configure and build:
 
 ```bash
-git clone https://github.com/seth-reee/qOmaedit.git
-cd qOmaedit
+git clone https://github.com/seth-reee/Scroll.git
+cd Scroll
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
-./build/qomaedit
+./build/scroll
 ```
 
 The application requires Qt 6.5 or later. Tests are enabled by default; add `-DBUILD_TESTING=OFF` when configuring to build without them.
@@ -104,13 +104,13 @@ An optional Linux probe measures memory and CPU usage with generated files:
 
 ```bash
 cmake --build build --target profile_memory
-./build/profile_memory ./build/qomaedit
+./build/profile_memory ./build/scroll
 ```
 
 The default measurement uses Qt's offscreen backend and isolated settings. To compare with installed KWrite and gedit on your desktop:
 
 ```bash
-./build/profile_memory --desktop --compare --repeats 2 ./build/qomaedit
+./build/profile_memory --desktop --compare --repeats 2 ./build/scroll
 ```
 
 The desktop comparison opens temporary test windows. See [REVIEW.md](REVIEW.md) for results, methodology, and limitations.
@@ -121,4 +121,4 @@ Bug reports and pull requests are welcome. For code changes, include relevant te
 
 ## License
 
-qOmaedit is available under the [MIT License](LICENSE).
+Scroll is available under the [MIT License](LICENSE).

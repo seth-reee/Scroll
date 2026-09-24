@@ -1,11 +1,11 @@
 [Desktop Entry]
 Type=Application
-Name=qOmaedit
+Name=Scroll
 GenericName=Text Editor
 Comment=A lightweight script editor that follows the Omarchy theme
-Exec=qomaedit %F
-TryExec=qomaedit
-Icon=qomaedit
+Exec=scroll %F
+TryExec=scroll
+Icon=scroll
 Terminal=false
 Categories=Utility;TextEditor;
 MimeType=text/plain;text/markdown;text/x-shellscript;application/x-shellscript;text/x-python;text/x-lua;text/javascript;application/ecmascript;application/json;application/toml;application/yaml;

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(qOmaedit VERSION 0.2.2 LANGUAGES CXX)
+project(Scroll VERSION 0.3.0 LANGUAGES CXX)
 include(GNUInstallDirs)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -15,19 +15,19 @@ add_library(editor_core STATIC
 )
 target_include_directories(editor_core PUBLIC src)
 target_link_libraries(editor_core PUBLIC Qt6::Widgets)
-qt_add_resources(editor_core "qomaedit_license" PREFIX "/" FILES LICENSE)
-qt_add_executable(qomaedit src/main.cpp)
-qt_add_resources(qomaedit "qomaedit_resources"
+qt_add_resources(editor_core "scroll_license" PREFIX "/" FILES LICENSE)
+qt_add_executable(scroll src/main.cpp)
+qt_add_resources(scroll "scroll_resources"
     PREFIX "/"
-    FILES resources/qomaedit.png
+    FILES resources/scroll.png
 )
-target_link_libraries(qomaedit PRIVATE editor_core)
-target_compile_definitions(qomaedit PRIVATE QOMAEDIT_VERSION="${PROJECT_VERSION}")
-install(TARGETS qomaedit RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(FILES packaging/qomaedit.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
-install(FILES packaging/qomaedit.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
-install(FILES resources/qomaedit.png DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps)
-install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/qomaedit)
+target_link_libraries(scroll PRIVATE editor_core)
+target_compile_definitions(scroll PRIVATE SCROLL_VERSION="${PROJECT_VERSION}")
+install(TARGETS scroll RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(FILES packaging/scroll.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+install(FILES packaging/scroll.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
+install(FILES resources/scroll.png DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps)
+install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/scroll)
 
 include(CTest)
 if(BUILD_TESTING)

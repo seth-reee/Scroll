@@ -1,3 +1,6 @@
 /build/
 /build-release/
 /dist/
+/.appimage-tools/
+/AppDir/
+/build-appimage/

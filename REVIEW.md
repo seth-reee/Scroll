@@ -71,7 +71,7 @@ Reproduce the desktop comparison (opens temporary windows):
 
 ```bash
 cmake --build build --target profile_memory
-./build/profile_memory --desktop --compare --repeats 2 ./build/qomaedit
+./build/profile_memory --desktop --compare --repeats 2 ./build/scroll
 ```
 
 Use `--settle-ms 30000` for a longer warmup. Omit `--desktop --compare` for a
