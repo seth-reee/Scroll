@@ -35,6 +35,12 @@ class EditorTests : public QObject {
         return QUrl::fromLocalFile(output.fileName());
     }
 private slots:
+    void aboutLicenseBundled() {
+        QFile license(":/LICENSE");
+        QVERIFY(license.open(QIODevice::ReadOnly));
+        QVERIFY(license.readAll().contains("MIT License"));
+    }
+
     void fileSafety() {
         Theme theme;
         CodeEditor editor(&theme);

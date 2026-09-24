@@ -6,15 +6,18 @@
 #include <QCloseEvent>
 #include <QDialog>
 #include <QDialogButtonBox>
+#include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFormLayout>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
 #include <QMessageBox>
 #include <QPainter>
 #include <QPushButton>
+#include <QTextBrowser>
 #include <QStatusBar>
 #include <QTabBar>
 #include <QTabWidget>
@@ -79,12 +82,41 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_tabs(new QTabWi
     action(tr("Previous tab"), QKeySequence::PreviousChild, [this] { setCurrentIndex((m_tabs->currentIndex() + tabCount() - 1) % tabCount()); });
     menu->addSeparator();
     action(tr("About qOmaedit"), {}, [this] {
-        QMessageBox about(this);
-        about.setWindowTitle(tr("About qOmaedit"));
-        about.setTextFormat(Qt::RichText);
-        about.setText(tr("qOmaedit %1<br>Licensed under the MIT License.<br><a href=\"https://github.com/seth-reee/qOmaedit\">GitHub repository</a>").arg(qApp->applicationVersion()));
-        about.setIconPixmap(qApp->windowIcon().pixmap(64, 64));
-        about.exec();
+        QDialog dialog(this);
+        dialog.setWindowTitle(tr("About qOmaedit"));
+        dialog.resize(580, 440);
+        auto *layout = new QVBoxLayout(&dialog);
+        layout->setContentsMargins(20, 20, 20, 20);
+        layout->setSpacing(10);
+
+        auto *icon = new QLabel;
+        icon->setPixmap(qApp->windowIcon().pixmap(72, 72));
+        layout->addWidget(icon);
+        auto *heading = new QLabel(tr("qOmaedit %1").arg(qApp->applicationVersion()));
+        QFont font = heading->font();
+        font.setPointSize(17);
+        font.setBold(true);
+        heading->setFont(font);
+        layout->addWidget(heading);
+        layout->addWidget(new QLabel(tr("A lightweight plain-text editor for Omarchy.")));
+
+        auto *github = new QLabel(tr("Created by seth-reee · <a href=\"https://github.com/seth-reee\">GitHub profile</a>"));
+        github->setOpenExternalLinks(true);
+        layout->addWidget(github);
+        layout->addWidget(new QLabel(tr("MIT License · Copyright © 2026 seth-reee")));
+
+        QFile license(":/LICENSE");
+        auto *licenseText = new QTextBrowser;
+        if (license.open(QIODevice::ReadOnly)) licenseText->setPlainText(QString::fromUtf8(license.readAll()));
+        layout->addWidget(licenseText, 1);
+
+        auto *close = new QPushButton(tr("Close"));
+        auto *bottom = new QHBoxLayout;
+        bottom->addStretch();
+        bottom->addWidget(close);
+        layout->addLayout(bottom);
+        connect(close, &QPushButton::clicked, &dialog, &QDialog::accept);
+        dialog.exec();
     });
 
     auto *settings = new QPushButton(tr("Settings"), this);

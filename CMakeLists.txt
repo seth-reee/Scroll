@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(qOmaedit VERSION 0.2.1 LANGUAGES CXX)
+project(qOmaedit VERSION 0.2.2 LANGUAGES CXX)
 include(GNUInstallDirs)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -15,6 +15,7 @@ add_library(editor_core STATIC
 )
 target_include_directories(editor_core PUBLIC src)
 target_link_libraries(editor_core PUBLIC Qt6::Widgets)
+qt_add_resources(editor_core "qomaedit_license" PREFIX "/" FILES LICENSE)
 qt_add_executable(qomaedit src/main.cpp)
 qt_add_resources(qomaedit "qomaedit_resources"
     PREFIX "/"
