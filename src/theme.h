@@ -34,13 +34,13 @@ signals:
 private:
     void watchFiles();
     QString statePath(const QString &file) const;
-    QColor m_background{"#1a1b26"};
-    QColor m_panel{"#13141c"};
-    QColor m_surface{"#24283b"};
-    QColor m_foreground{"#a9b1d6"};
-    QColor m_mutedForeground{"#565f89"};
-    QColor m_accent{"#7aa2f7"};
-    QColor m_selection{"#292e42"};
+    QColor m_background{"#121212"};
+    QColor m_panel{"#121212"};
+    QColor m_surface{"#1e1e1e"};
+    QColor m_foreground{"#bebebe"};
+    QColor m_mutedForeground{"#555555"};
+    QColor m_accent{"#e68e0d"};
+    QColor m_selection{"#333333"};
     QString m_name{"Omarchy"};
     QFileSystemWatcher m_watcher;
 };

@@ -9,6 +9,7 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFont>
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -16,6 +17,7 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QPainter>
+#include <QPixmap>
 #include <QPushButton>
 #include <QTextBrowser>
 #include <QStatusBar>
@@ -55,6 +57,15 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_tabs(new QTabWi
 
     auto *header = addToolBar(tr("Document"));
     header->setMovable(false);
+    auto *titleIcon = new QLabel(this);
+    titleIcon->setPixmap(QPixmap(":/scroll.png").scaled(42, 42, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    header->addWidget(titleIcon);
+    auto *title = new QLabel(tr("Scroll"), this);
+    QFont titleFont = title->font();
+    titleFont.setBold(true);
+    title->setFont(titleFont);
+    title->setContentsMargins(0, 0, 12, 0);
+    header->addWidget(title);
     m_path = new PathLabel(this);
     header->addWidget(m_path);
     auto *menuButton = new QToolButton(this);
@@ -80,8 +91,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_tabs(new QTabWi
     action(tr("Find and replace…"), QKeySequence::Find, [this] { showFind(); });
     action(tr("Next tab"), QKeySequence::NextChild, [this] { setCurrentIndex((m_tabs->currentIndex() + 1) % tabCount()); });
     action(tr("Previous tab"), QKeySequence::PreviousChild, [this] { setCurrentIndex((m_tabs->currentIndex() + tabCount() - 1) % tabCount()); });
-    menu->addSeparator();
-    action(tr("About Scroll"), {}, [this] {
+    auto *aboutButton = new QPushButton(tr("About"), this);
+    header->addWidget(aboutButton);
+    connect(aboutButton, &QPushButton::clicked, this, [this] {
         QDialog dialog(this);
         dialog.setWindowTitle(tr("About Scroll"));
         dialog.resize(580, 440);
@@ -118,6 +130,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_tabs(new QTabWi
         connect(close, &QPushButton::clicked, &dialog, &QDialog::accept);
         dialog.exec();
     });
+    menu->addSeparator();
+    action(tr("About Scroll"), {}, [aboutButton] { aboutButton->click(); });
 
     auto *settings = new QPushButton(tr("Settings"), this);
     connect(settings, &QPushButton::clicked, this, &MainWindow::showSettings);
@@ -266,6 +280,21 @@ void MainWindow::applyTheme() {
     qApp->setPalette(p);
     qApp->setPalette(p, "QMenu");
     setPalette(p);
+    qApp->setStyleSheet(QString(
+        "QWidget { font-size: 13px; } "
+        "QPushButton, QLineEdit, QComboBox { padding: 7px 10px; border: 1px solid %1; border-radius: 6px; } "
+        "QPushButton:hover { border-color: %2; } QPushButton:disabled { color: %3; } "
+        "QTableWidget { border: 1px solid %1; border-radius: 6px; gridline-color: %1; } "
+        "QHeaderView::section { background: %4; padding: 8px; border: none; border-bottom: 1px solid %1; } "
+        "QTableWidget::item { padding: 5px; } QTableWidget::item:selected { background: %5; } "
+        "QTabBar::tab { padding: 7px 10px; border: 1px solid transparent; } "
+        "QTabBar::tab:selected { border-color: %1; border-bottom-color: %2; } "
+        "QMenu { border: 1px solid %1; padding: 4px; } "
+        "QMenu::item { padding: 6px 24px 6px 10px; } "
+        "QMenu::item:selected { background: %5; }")
+        .arg(m_theme.surface().name(), m_theme.accent().name(),
+             m_theme.mutedForeground().name(), m_theme.surface().name(),
+             m_theme.selection().name()));
 }
 void MainWindow::applySettings() {
     m_tabs->tabBar()->setVisible(m_settings.tabsEnabled());
