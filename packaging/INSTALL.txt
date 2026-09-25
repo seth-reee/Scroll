@@ -1,4 +1,4 @@
-Scroll native installation (Arch Linux x86_64)
+Scroll native installation (Omarchy x86_64 or ARM64; Arch Linux or Arch Linux ARM)
 
 Prefer the pacman package:
   sudo pacman -U scroll-*.pkg.tar.zst

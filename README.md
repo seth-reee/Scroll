@@ -13,7 +13,9 @@ A lightweight text editor for scripts and plain-text files on [Omarchy](https://
 
 ## Installation
 
-Native packages target **Arch Linux / Omarchy on x86_64** and use the system Qt libraries.
+Native packages can be built for **Omarchy on x86_64 or ARM64** and use the system Qt libraries. They also work on Arch Linux x86_64 and Arch Linux ARM aarch64. Install the package whose filename matches your machine's architecture.
+
+**ARM64 status:** The ARM64 package built and passed automated tests under QEMU, but remains untested on a real ARM64 Omarchy desktop.
 
 Download a `.pkg.tar.zst` package from [Releases](https://github.com/seth-reee/Scroll/releases), then install it from your download directory:
 
@@ -89,7 +91,7 @@ sudo pacman -S --needed desktop-file-utils
 ./packaging/build-package.sh
 ```
 
-The builder packages the current Git commit, runs the tests, and validates the desktop entry. Outputs are written to `dist/`:
+The builder runs natively on x86_64 or aarch64, packages the current Git commit, runs the tests, and validates the desktop entry. Outputs are written to `dist/`:
 
 - An Arch Linux package (`.pkg.tar.zst`).
 - A binary tarball with manual installation instructions.

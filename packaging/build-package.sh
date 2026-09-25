@@ -15,8 +15,9 @@ if [[ -n "$(git status --porcelain)" ]]; then
   echo 'Commit source changes first: packages are built from the current Git commit.' >&2
   exit 1
 fi
-if [[ "$(uname -m)" != x86_64 ]]; then
-  echo 'This package recipe currently targets Arch Linux x86_64.' >&2
+build_arch="$(uname -m)"
+if [[ "$build_arch" != x86_64 && "$build_arch" != aarch64 ]]; then
+  echo "Unsupported architecture: $build_arch" >&2
   exit 1
 fi
 
@@ -46,7 +47,7 @@ makepkg --printsrcinfo > "$output_dir/.SRCINFO"
 mapfile -t packages < <(makepkg --packagelist)
 [[ ${#packages[@]} == 1 && -f "${packages[0]}" ]] || { echo 'Expected exactly one built package.' >&2; exit 1; }
 
-bundle_name="scroll-$version-linux-x86_64"
+bundle_name="scroll-$version-linux-$build_arch"
 mkdir "$work_dir/$bundle_name"
 bsdtar -xf "${packages[0]}" -C "$work_dir/$bundle_name" usr
 install -m644 "$project_dir/packaging/INSTALL.txt" "$work_dir/$bundle_name/INSTALL.txt"
