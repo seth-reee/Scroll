@@ -32,6 +32,7 @@ protected:
     virtual void showError(const QString &message);
 private:
     CodeEditor *createEditor();
+    void installTabCloseButton(CodeEditor *editor);
     bool allowClose(CodeEditor *editor);
     void refreshTab(CodeEditor *editor);
     void refreshStatus();

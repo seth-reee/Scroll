@@ -6,11 +6,16 @@
 #include <QApplication>
 #include <QElapsedTimer>
 #include <QFile>
+#include <QMessageBox>
 #include <QScrollBar>
 #include <QSignalSpy>
+#include <QTabBar>
+#include <QTabWidget>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QTextDocument>
+#include <QTimer>
+#include <QToolButton>
 
 class TestWindow : public MainWindow {
 public:
@@ -49,6 +54,44 @@ private slots:
         QFile license(":/LICENSE");
         QVERIFY(license.open(QIODevice::ReadOnly));
         QVERIFY(license.readAll().contains("MIT License"));
+    }
+
+    void tabCloseButtonFollowsMovedTab() {
+        TestWindow window;
+        auto *first = window.editor();
+        first->insertPlainText("first");
+        window.newFile();
+        auto *tabs = window.findChild<QTabWidget *>();
+        QVERIFY(tabs);
+        auto *button = qobject_cast<QToolButton *>(tabs->tabBar()->tabButton(0, QTabBar::RightSide));
+        QVERIFY(button);
+        QCOMPARE(button->text(), QString::fromUtf8("×"));
+        tabs->tabBar()->moveTab(0, 1);
+        window.choices = {MainWindow::CloseChoice::Discard};
+        button->click();
+        QCOMPARE(window.tabCount(), 1);
+        QVERIFY(window.editor() != first);
+    }
+
+    void themedLinkAndIconFreeUnsavedPrompt() {
+        MainWindow window;
+        Theme theme;
+        QCOMPARE(qApp->palette().color(QPalette::Link), theme.accent());
+        window.editor()->insertPlainText("unsaved");
+        bool inspected = false;
+        QTimer::singleShot(0, &window, [&] {
+            for (QWidget *widget : QApplication::topLevelWidgets()) {
+                auto *box = qobject_cast<QMessageBox *>(widget);
+                if (!box) continue;
+                QCOMPARE(box->icon(), QMessageBox::NoIcon);
+                for (const auto button : {QMessageBox::Save, QMessageBox::Discard, QMessageBox::Cancel})
+                    QVERIFY(box->button(button)->icon().isNull());
+                inspected = true;
+                box->done(QMessageBox::Cancel);
+            }
+        });
+        QVERIFY(!window.closeTab(0));
+        QVERIFY(inspected);
     }
 
     void fileSafety() {

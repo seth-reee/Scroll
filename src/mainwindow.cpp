@@ -12,6 +12,7 @@
 #include <QFont>
 #include <QFormLayout>
 #include <QHBoxLayout>
+#include <QIcon>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
@@ -49,7 +50,7 @@ protected:
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_tabs(new QTabWidget(this)) {
     resize(1080, 720);
     m_tabs->setDocumentMode(true);
-    m_tabs->setTabsClosable(true);
+    m_tabs->setTabsClosable(false);
     m_tabs->setMovable(true);
     setCentralWidget(m_tabs);
     connect(m_tabs, &QTabWidget::tabCloseRequested, this, &MainWindow::closeTab);
@@ -175,7 +176,24 @@ void MainWindow::newFile() {
     if (editor() && editor()->filePath().isEmpty() && editor()->document()->isEmpty() && !editor()->document()->isModified()) return;
     auto *edit = createEditor();
     m_tabs->setCurrentIndex(m_tabs->addTab(edit, edit->fileName()));
+    installTabCloseButton(edit);
     edit->setFocus();
+}
+
+void MainWindow::installTabCloseButton(CodeEditor *edit) {
+    auto *button = new QToolButton(m_tabs->tabBar());
+    button->setObjectName("scrollTabClose");
+    button->setText(QString::fromUtf8("×"));
+    button->setToolTip(tr("Close tab"));
+    button->setAccessibleName(tr("Close %1").arg(edit->fileName()));
+    button->setAutoRaise(true);
+    button->setFocusPolicy(Qt::NoFocus);
+    button->setFixedSize(20, 20);
+    connect(button, &QToolButton::clicked, this, [this, edit] {
+        const int index = m_tabs->indexOf(edit);
+        if (index >= 0) closeTab(index);
+    });
+    m_tabs->tabBar()->setTabButton(m_tabs->indexOf(edit), QTabBar::RightSide, button);
 }
 
 bool MainWindow::open(const QUrl &url) {
@@ -193,6 +211,7 @@ bool MainWindow::open(const QUrl &url) {
         m_tabs->insertTab(index, edit, edit->fileName());
         setCurrentIndex(index);
     } else setCurrentIndex(m_tabs->addTab(edit, edit->fileName()));
+    installTabCloseButton(edit);
     refreshStatus();
     return true;
 }
@@ -216,8 +235,14 @@ QUrl MainWindow::chooseSavePath(CodeEditor *edit) {
     return QFileDialog::getSaveFileUrl(this, tr("Save file"), QUrl::fromLocalFile(edit->filePath()), tr("All files (*)"));
 }
 MainWindow::CloseChoice MainWindow::confirmClose(CodeEditor *edit) {
-    const auto choice = QMessageBox::warning(this, tr("Unsaved changes"), tr("Save changes to %1?").arg(edit->fileName()),
-                                            QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, QMessageBox::Save);
+    QMessageBox prompt(QMessageBox::NoIcon, tr("Unsaved changes"),
+                       tr("Save changes to %1?").arg(edit->fileName()),
+                       QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, this);
+    prompt.setDefaultButton(QMessageBox::Save);
+    prompt.setEscapeButton(QMessageBox::Cancel);
+    for (const auto button : {QMessageBox::Save, QMessageBox::Discard, QMessageBox::Cancel})
+        prompt.button(button)->setIcon(QIcon());
+    const int choice = prompt.exec();
     if (choice == QMessageBox::Save) return CloseChoice::Save;
     if (choice == QMessageBox::Discard) return CloseChoice::Discard;
     return CloseChoice::Cancel;
@@ -271,6 +296,8 @@ void MainWindow::applyTheme() {
     p.setColor(QPalette::HighlightedText, m_theme.foreground());
     p.setColor(QPalette::ToolTipBase, m_theme.panel());
     p.setColor(QPalette::ToolTipText, m_theme.foreground());
+    p.setColor(QPalette::Link, m_theme.accent());
+    p.setColor(QPalette::LinkVisited, m_theme.accent());
     p.setColor(QPalette::Disabled, QPalette::WindowText, m_theme.mutedForeground());
     p.setColor(QPalette::Disabled, QPalette::Text, m_theme.mutedForeground());
     p.setColor(QPalette::Disabled, QPalette::ButtonText, m_theme.mutedForeground());
@@ -289,12 +316,14 @@ void MainWindow::applyTheme() {
         "QTableWidget::item { padding: 5px; } QTableWidget::item:selected { background: %5; } "
         "QTabBar::tab { padding: 7px 10px; border: 1px solid transparent; } "
         "QTabBar::tab:selected { border-color: %1; border-bottom-color: %2; } "
+        "QToolButton#scrollTabClose { color: %6; background: transparent; border: none; border-radius: 4px; padding: 0; font-size: 16px; } "
+        "QToolButton#scrollTabClose:hover { color: %2; background: %5; } "
         "QMenu { border: 1px solid %1; padding: 4px; } "
         "QMenu::item { padding: 6px 24px 6px 10px; } "
         "QMenu::item:selected { background: %5; }")
         .arg(m_theme.surface().name(), m_theme.accent().name(),
              m_theme.mutedForeground().name(), m_theme.surface().name(),
-             m_theme.selection().name()));
+             m_theme.selection().name(), m_theme.foreground().name()));
 }
 void MainWindow::applySettings() {
     m_tabs->tabBar()->setVisible(m_settings.tabsEnabled());

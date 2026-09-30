@@ -7,6 +7,8 @@
 #include <QUrl>
 
 int main(int argc, char *argv[]) {
+    if (qEnvironmentVariable("XDG_CURRENT_DESKTOP").contains("Hyprland", Qt::CaseInsensitive))
+        qputenv("QT_QPA_PLATFORMTHEME", "xdgdesktopportal");
     QApplication app(argc, argv);
     app.setOrganizationName("Scroll");
     app.setApplicationName("Scroll");
