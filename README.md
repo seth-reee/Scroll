@@ -2,6 +2,9 @@
 
 A lightweight text editor for scripts and plain-text files on [Omarchy](https://omarchy.org/), built with Qt 6 Widgets. Scroll follows your desktop theme and keeps everyday editing simple.
 
+> [!IMPORTANT]
+> **Package rename:** Future packages use `scroll-editor` instead of `scroll`. The application is still called **Scroll** and launches with `scroll`; your settings stay in `~/.config/Scroll/Scroll.conf`. The new package declares that it replaces the old `scroll` package. Existing release downloads retain their original `scroll-*` filenames; use the filename you downloaded when installing.
+
 ## Features
 
 - **Tabbed editing** with independent undo history, cursor position, and scrolling for each document.
@@ -20,7 +23,7 @@ Native packages can be built for **Omarchy on x86_64 or ARM64** and use the syst
 Download a `.pkg.tar.zst` package from [Releases](https://github.com/seth-reee/Scroll/releases), then install it from your download directory:
 
 ```bash
-sudo pacman -U ./scroll-*.pkg.tar.zst
+sudo pacman -U ./scroll-editor-*.pkg.tar.zst
 ```
 
 For native Wayland support:
@@ -35,7 +38,7 @@ Launch **Scroll** from your application menu, or open files from a terminal:
 scroll script.sh notes.md
 ```
 
-The package includes the application, desktop entry, icon, and license. It replaces the qOmaedit package. To associate a file type with Scroll, use your file manager's **Open With** settings. Scroll saves preferences in `~/.config/Scroll/Scroll.conf`.
+The `scroll-editor` package includes the application, desktop entry, icon, and license. It replaces the previous `scroll` and `qomaedit` packages. The application name remains Scroll and the terminal command remains `scroll`. To associate a file type with Scroll, use your file manager's **Open With** settings. Scroll saves preferences in `~/.config/Scroll/Scroll.conf`.
 
 For manual installation from a binary tarball, follow the included [installation instructions](packaging/INSTALL.txt). These binaries require Arch's system libraries.
 

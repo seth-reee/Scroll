@@ -1,7 +1,7 @@
 Scroll native installation (Omarchy x86_64 or ARM64; Arch Linux or Arch Linux ARM)
 
-Prefer the pacman package:
-  sudo pacman -U scroll-*.pkg.tar.zst
+Prefer the pacman package (scroll-editor; replaces scroll and qomaedit):
+  sudo pacman -U scroll-editor-*.pkg.tar.zst
 
 For the manual binary tarball, install system runtime dependencies:
   sudo pacman -S --needed qt6-base
@@ -13,7 +13,7 @@ From the extracted binary tarball directory:
   sudo install -Dm644 usr/share/applications/scroll.desktop /usr/share/applications/scroll.desktop
   sudo install -Dm644 usr/share/icons/hicolor/scalable/apps/scroll.svg /usr/share/icons/hicolor/scalable/apps/scroll.svg
   sudo install -Dm644 usr/share/icons/hicolor/512x512/apps/scroll.png /usr/share/icons/hicolor/512x512/apps/scroll.png
-  sudo install -Dm644 usr/share/licenses/scroll/LICENSE /usr/share/licenses/scroll/LICENSE
+  sudo install -Dm644 usr/share/licenses/scroll-editor/LICENSE /usr/share/licenses/scroll-editor/LICENSE
   sudo update-desktop-database /usr/share/applications
   sudo gtk-update-icon-cache -f -t /usr/share/icons/hicolor
 

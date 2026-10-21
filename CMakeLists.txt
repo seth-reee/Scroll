@@ -28,7 +28,7 @@ install(TARGETS scroll RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES packaging/scroll.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
 install(FILES packaging/scroll.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
 install(FILES resources/scroll.png DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps)
-install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/scroll)
+install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/scroll-editor)
 
 include(CTest)
 if(BUILD_TESTING)
