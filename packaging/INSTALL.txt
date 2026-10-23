@@ -11,8 +11,7 @@ For native Wayland support:
 From the extracted binary tarball directory:
   sudo install -Dm755 usr/bin/scroll /usr/bin/scroll
   sudo install -Dm644 usr/share/applications/scroll.desktop /usr/share/applications/scroll.desktop
-  sudo install -Dm644 usr/share/icons/hicolor/scalable/apps/scroll.svg /usr/share/icons/hicolor/scalable/apps/scroll.svg
-  sudo install -Dm644 usr/share/icons/hicolor/512x512/apps/scroll.png /usr/share/icons/hicolor/512x512/apps/scroll.png
+  sudo install -Dm644 usr/share/icons/hicolor/512x512/apps/scroll-app.png /usr/share/icons/hicolor/512x512/apps/scroll-app.png
   sudo install -Dm644 usr/share/licenses/scroll-editor/LICENSE /usr/share/licenses/scroll-editor/LICENSE
   sudo update-desktop-database /usr/share/applications
   sudo gtk-update-icon-cache -f -t /usr/share/icons/hicolor
