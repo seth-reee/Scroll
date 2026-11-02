@@ -1,0 +1,100 @@
+name: Nix packages
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: nix-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.source.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Prepare source
+        id: source
+        run: bash packaging/nix/prepare-ci.sh "$PWD/dist"
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: scroll-source
+          path: dist/*.tar.gz
+          if-no-files-found: error
+  nix:
+    name: Build Nix ${{ matrix.system }}
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - system: x86_64-linux
+            runner: ubuntu-24.04
+          - system: aarch64-linux
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          name: scroll-source
+          path: dist
+      - uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build, test, and export Nix closure
+        env:
+          PACKAGE_VERSION: ${{ needs.prepare.outputs.version }}
+          PACKAGE_SYSTEM: ${{ matrix.system }}
+        run: bash packaging/nix/build-ci.sh "$PWD/dist"
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: scroll-nix-${{ matrix.system }}
+          path: |
+            dist/*.nar.xz
+            dist/*.store-path
+            dist/SHA256SUMS-nix-*
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [prepare, nix]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          pattern: scroll-nix-*
+          path: dist
+          merge-multiple: true
+      - name: Publish Nix assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          cd dist
+          for sums in SHA256SUMS-*; do sha256sum -c "$sums"; done
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" ./*.nar.xz ./*.store-path SHA256SUMS-* --clobber
+          else
+            gh release create "$RELEASE_TAG" --verify-tag --generate-notes \
+              --title "Scroll ${RELEASE_TAG#v}" ./*.nar.xz ./*.store-path SHA256SUMS-*
+          fi
+          verify_dir=$(mktemp -d)
+          trap 'rm -rf "$verify_dir"' EXIT
+          gh release download "$RELEASE_TAG" --dir "$verify_dir" --pattern '*nix-*'
+          for sums in SHA256SUMS-*; do cmp "$sums" "$verify_dir/$sums"; done
+          cd "$verify_dir"
+          for sums in SHA256SUMS-*; do sha256sum -c "$sums"; done

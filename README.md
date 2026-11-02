@@ -127,3 +127,50 @@ Bug reports and pull requests are welcome. For code changes, include relevant te
 ## License
 
 Scroll is available under the [MIT License](LICENSE).
+
+## NixOS and Nix-based Omarchy forks
+
+The flake provides `scroll` and `default` packages for `x86_64-linux` and
+`aarch64-linux`, with pinned nixpkgs dependencies. From a checkout:
+
+```sh
+nix build .#scroll
+nix run .#scroll
+```
+
+For a declarative NixOS install, add this input to your system flake:
+
+```nix
+inputs.scroll.url = "github:seth-reee/Scroll";
+```
+
+Pass `inputs` using `specialArgs = { inherit inputs; };`, then add to a module:
+
+```nix
+{ inputs, pkgs, ... }: {
+  environment.systemPackages = [
+    inputs.scroll.packages.${pkgs.stdenv.hostPlatform.system}.scroll
+  ];
+}
+```
+
+For Home Manager, use the same package in `home.packages` and provide `inputs`
+through `extraSpecialArgs`. Update your system's flake lock to get new releases.
+
+Scroll uses its built-in colors if no Omarchy theme is present.
+CI publishes Nix artifacts for branch builds and adds Nix release assets on version tags.
+The existing manual Arch packaging flow is unchanged.
+
+CI builds both architectures on native runners. Download the matching
+`scroll-VERSION-nix-SYSTEM.nar.xz`, `.store-path`, and `SHA256SUMS-nix-SYSTEM`
+files from a release (replace VERSION and SYSTEM), then import and install:
+
+```sh
+sha256sum -c SHA256SUMS-nix-SYSTEM
+xz -dc scroll-VERSION-nix-SYSTEM.nar.xz | sudo nix-store --import
+nix profile install "$(cat scroll-VERSION-nix-SYSTEM.store-path)"
+```
+
+Nix must already be installed. Omit `sudo` for single-user Nix installations.
+The exports include the full runtime closure; a declarative flake installation
+is preferred on NixOS. Omarchy itself is optional.
