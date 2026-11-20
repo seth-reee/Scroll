@@ -11,5 +11,6 @@ cd /work/dist
 shopt -s nullglob
 packages=(./*.pkg.tar.zst)
 bundles=(./*-linux-"$PACKAGE_ARCH".tar.gz)
+printf "Package files: %s; bundle files: %s\n" "${packages[*]}" "${bundles[*]}"
 [[ ${#packages[@]} == 1 && ${#bundles[@]} == 1 ]]
 sha256sum "${packages[@]#./}" "${bundles[@]#./}" > "SHA256SUMS-arch-$PACKAGE_ARCH"
