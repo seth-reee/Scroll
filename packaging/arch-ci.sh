@@ -2,7 +2,9 @@
 set -euo pipefail
 : "${PACKAGE_ARCH:?}" "${BUILD_UID:?}" "${BUILD_GID:?}"
 [[ "$(uname -m)" == "$PACKAGE_ARCH" ]]
-pacman -Syu --noconfirm --needed base-devel git cmake ninja qt6-base desktop-file-utils
+pacman -Syu --noconfirm --needed base-devel git cmake ninja qt6-base desktop-file-utils zstd
+# Arch Linux ARM may default to xz; releases use the same zstd format on both architectures.
+sed -i "s/^PKGEXT=.*/PKGEXT='.pkg.tar.zst'/" /etc/makepkg.conf
 # The runner owns the checkout; build as the same unprivileged UID for makepkg.
 groupadd -g "$BUILD_GID" scrollbuild 2>/dev/null || true
 useradd -m -u "$BUILD_UID" -g "$BUILD_GID" scrollbuild
