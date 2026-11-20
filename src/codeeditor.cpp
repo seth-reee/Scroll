@@ -2,6 +2,8 @@
 #include "theme.h"
 #include "syntaxhighlighter.h"
 #include <QFile>
+#include <QCryptographicHash>
+#include <QKeyEvent>
 #include <QFileInfo>
 #include <QFontDatabase>
 #include <QPainter>
@@ -62,6 +64,11 @@ QString CodeEditor::language() const {
     if (ext == "html" || ext == "htm") return "HTML";
     if (ext == "css") return "CSS";
     if (ext == "md") return "Markdown";
+    if (QStringList{"c", "h"}.contains(ext)) return "C";
+    if (QStringList{"cpp", "cc", "cxx", "hpp", "hh", "hxx"}.contains(ext)) return "C++";
+    if (ext == "rs") return "Rust";
+    if (ext == "go") return "Go";
+    if (ext == "php") return "PHP";
     return "Plain text";
 }
 
@@ -77,6 +84,7 @@ bool CodeEditor::load(const QUrl &url) {
     if (decoder.hasError() || text.contains(QChar::Null)) {
         emit error(tr("This file is not valid UTF-8 text.")); return false;
     }
+    m_diskHash = QCryptographicHash::hash(bytes, QCryptographicHash::Sha256);
     m_crlf = text.contains("\r\n");
     m_bom = bytes.startsWith("\xef\xbb\xbf");
     text.replace("\r\n", "\n");
@@ -109,9 +117,35 @@ bool CodeEditor::saveAs(const QUrl &url) {
     }
     if (!file.commit()) { emit error(file.errorString()); return false; }
     m_path = path;
+    QFile saved(path);
+    if (saved.open(QIODevice::ReadOnly)) {
+        QCryptographicHash hash(QCryptographicHash::Sha256);
+        if (hash.addData(&saved)) m_diskHash = hash.result();
+    }
+    m_highlighted.clear();
+    viewport()->update();
     document()->setModified(false);
     emit fileChanged();
     return true;
+}
+
+bool CodeEditor::diskChanged() const {
+    if (m_path.isEmpty()) return false;
+    QFile file(m_path);
+    if (!file.open(QIODevice::ReadOnly)) return true;
+    QCryptographicHash hash(QCryptographicHash::Sha256);
+    return !hash.addData(&file) || hash.result() != m_diskHash;
+}
+void CodeEditor::setIndentation(int width, bool spaces) {
+    m_indentWidth = qBound(1, width, 16); m_indentSpaces = spaces;
+    setTabStopDistance(fontMetrics().horizontalAdvance(' ') * m_indentWidth);
+}
+void CodeEditor::keyPressEvent(QKeyEvent *event) {
+    if (m_indentSpaces && event->key() == Qt::Key_Tab && event->modifiers() == Qt::NoModifier) {
+        insertPlainText(QString(m_indentWidth - textCursor().positionInBlock() % m_indentWidth, QLatin1Char(' ')));
+        return;
+    }
+    QPlainTextEdit::keyPressEvent(event);
 }
 
 void CodeEditor::applyTheme() {
@@ -178,7 +212,7 @@ void CodeEditor::highlightViewport() {
                 // A minified/giant single line must not turn one visible block
                 // into an unbounded regex/formatting job.
                 formats = block.length() <= 32769
-                    ? SyntaxHighlighter::formats(block.text(), *m_theme)
+                    ? SyntaxHighlighter::formats(block.text(), *m_theme, language())
                     : QList<QTextLayout::FormatRange>();
                 changed = true;
             }
@@ -226,33 +260,37 @@ void CodeEditor::paintEvent(QPaintEvent *event) {
     }
 }
 
-bool CodeEditor::findNext(const QString &needle) {
+bool CodeEditor::findNext(const QString &needle, bool caseSensitive, bool backwards) {
     if (needle.isEmpty()) return false;
-    QTextCursor found = document()->find(needle, textCursor().selectionEnd(), QTextDocument::FindCaseSensitively);
-    if (found.isNull()) found = document()->find(needle, 0, QTextDocument::FindCaseSensitively);
+    QTextDocument::FindFlags flags;
+    if (caseSensitive) flags |= QTextDocument::FindCaseSensitively;
+    if (backwards) flags |= QTextDocument::FindBackward;
+    QTextCursor found = document()->find(needle, backwards ? textCursor().selectionStart() : textCursor().selectionEnd(), flags);
+    if (found.isNull()) found = document()->find(needle, backwards ? document()->characterCount() - 1 : 0, flags);
     if (found.isNull()) return false;
     setTextCursor(found);
     ensureCursorVisible();
     return true;
 }
-bool CodeEditor::replaceCurrent(const QString &needle, const QString &replacement) {
-    if (needle.isEmpty() || textCursor().selectedText() != needle) return false;
+bool CodeEditor::replaceCurrent(const QString &needle, const QString &replacement, bool caseSensitive) {
+    if (needle.isEmpty() || textCursor().selectedText().compare(needle, caseSensitive ? Qt::CaseSensitive : Qt::CaseInsensitive) != 0) return false;
     QTextCursor cursor = textCursor();
     cursor.insertText(replacement);
     setTextCursor(cursor);
-    findNext(needle);
+    findNext(needle, caseSensitive);
     return true;
 }
-int CodeEditor::replaceAll(const QString &needle, const QString &replacement) {
+int CodeEditor::replaceAll(const QString &needle, const QString &replacement, bool caseSensitive) {
     if (needle.isEmpty() || needle == replacement) return 0;
     QTextCursor edit(document());
     edit.beginEditBlock();
-    QTextCursor found = document()->find(needle, 0, QTextDocument::FindCaseSensitively);
+    const QTextDocument::FindFlags flags = caseSensitive ? QTextDocument::FindCaseSensitively : QTextDocument::FindFlags();
+    QTextCursor found = document()->find(needle, 0, flags);
     int count = 0;
     while (!found.isNull()) {
         found.insertText(replacement);
         ++count;
-        found = document()->find(needle, found, QTextDocument::FindCaseSensitively);
+        found = document()->find(needle, found, flags);
     }
     edit.endEditBlock();
     return count;

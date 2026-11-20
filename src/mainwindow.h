@@ -27,8 +27,10 @@ public:
     enum class CloseChoice { Save, Discard, Cancel };
 protected:
     void closeEvent(QCloseEvent *event) override;
+    bool event(QEvent *event) override;
     virtual CloseChoice confirmClose(CodeEditor *editor);
     virtual QUrl chooseSavePath(CodeEditor *editor);
+    virtual int confirmExternalChange(CodeEditor *editor);
     virtual void showError(const QString &message);
 private:
     CodeEditor *createEditor();
@@ -38,6 +40,8 @@ private:
     void refreshStatus();
     void applyTheme();
     void showFind();
+    bool checkExternalChange(CodeEditor *editor);
+    bool m_checkingExternal = false;
     void showSettings();
     void applySettings();
     Theme m_theme;

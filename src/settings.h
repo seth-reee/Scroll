@@ -9,6 +9,10 @@ class Settings final : public QObject {
     Q_PROPERTY(bool wrappedLineSpacing READ wrappedLineSpacing WRITE setWrappedLineSpacing NOTIFY wrappedLineSpacingChanged)
 public:
     explicit Settings(QObject *parent = nullptr);
+    int indentWidth() const { return m_indentWidth; }
+    bool indentSpaces() const { return m_indentSpaces; }
+    void setIndentWidth(int width);
+    void setIndentSpaces(bool spaces);
     bool tabsEnabled() const { return m_tabsEnabled; }
     bool syntaxEnabled() const { return m_syntaxEnabled; }
     bool wrappedLineSpacing() const { return m_wrappedLineSpacing; }
@@ -16,10 +20,13 @@ public:
     void setSyntaxEnabled(bool enabled);
     void setWrappedLineSpacing(bool enabled);
 signals:
+    void indentationChanged();
     void tabsEnabledChanged();
     void syntaxEnabledChanged();
     void wrappedLineSpacingChanged();
 private:
+    int m_indentWidth = 4;
+    bool m_indentSpaces = false;
     bool m_tabsEnabled = true;
     bool m_syntaxEnabled = true;
     bool m_wrappedLineSpacing = false;

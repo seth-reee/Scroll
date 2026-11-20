@@ -18,17 +18,22 @@ public:
     void setSyntaxEnabled(bool enabled);
     void setWrapEnabled(bool enabled);
     void setWrapGuides(bool enabled);
-    bool findNext(const QString &needle);
-    bool replaceCurrent(const QString &needle, const QString &replacement);
-    int replaceAll(const QString &needle, const QString &replacement);
+    bool findNext(const QString &needle, bool caseSensitive = true, bool backwards = false);
+    bool replaceCurrent(const QString &needle, const QString &replacement, bool caseSensitive = true);
+    int replaceAll(const QString &needle, const QString &replacement, bool caseSensitive = true);
     int highlightedBlockCount() const { return m_highlighted.size(); }
     int gutterWidth() const;
+    QString lineEnding() const { return m_crlf ? "CRLF" : "LF"; }
+    bool hasBom() const { return m_bom; }
+    bool diskChanged() const;
+    void setIndentation(int width, bool spaces);
     void paintGutter(QPaintEvent *event);
 signals:
     void fileChanged();
     void error(const QString &message);
 protected:
     void resizeEvent(QResizeEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
 private:
     void updateGutterWidth();
@@ -43,4 +48,7 @@ private:
     bool m_bom = false;
     bool m_syntax = true;
     bool m_guides = false;
+    int m_indentWidth = 4;
+    bool m_indentSpaces = false;
+    QByteArray m_diskHash;
 };

@@ -23,12 +23,14 @@ public:
     QUrl savePath;
     QString lastError;
     int prompts = 0;
+    int externalChoice = 0;
 protected:
     CloseChoice confirmClose(CodeEditor *) override {
         ++prompts;
         return choices.isEmpty() ? CloseChoice::Cancel : choices.takeFirst();
     }
     QUrl chooseSavePath(CodeEditor *) override { return savePath; }
+    int confirmExternalChange(CodeEditor *) override { return externalChoice; }
     void showError(const QString &message) override { lastError = message; }
 };
 
@@ -243,6 +245,7 @@ private slots:
 
     void formattingStaysBoundedAndDoesNotModifyText() {
         TestWindow window;
+        QVERIFY(window.open(file("formatting.js", "")));
         window.show();
         auto *editor = window.editor();
         editor->setPlainText(QString("const value = 123; // comment\n").repeated(20000));
@@ -275,6 +278,52 @@ private slots:
         QVERIFY(editor->extraSelections().isEmpty());
     }
 
+    void languageSpecificHighlighting() {
+        Theme theme;
+        QVERIFY(SyntaxHighlighter::formats("const x = 1; // comment", theme, "JavaScript").size() >= 3);
+        const auto python = SyntaxHighlighter::formats("x // 2 # comment", theme, "Python");
+        QCOMPARE(python.size(), 2);
+        QCOMPARE(python.last().format.foreground().color(), theme.mutedForeground());
+        QVERIFY(SyntaxHighlighter::formats("const x = 1", theme, "Plain text").isEmpty());
+    }
+    void externalChangesAreProtected() {
+        TestWindow window;
+        const auto url = file("external.txt", "original");
+        QVERIFY(window.open(url));
+        window.editor()->insertPlainText("local");
+        file("external.txt", "external");
+        QVERIFY(window.editor()->diskChanged());
+        QVERIFY(!window.saveEditor(window.editor()));
+        QFile current(url.toLocalFile());
+        QVERIFY(current.open(QIODevice::ReadOnly));
+        QCOMPARE(current.readAll(), QByteArray("external"));
+        current.close();
+        window.externalChoice = 1;
+        QVERIFY(!window.saveEditor(window.editor()));
+        QCOMPARE(window.editor()->toPlainText(), QString("external"));
+        QVERIFY(!window.editor()->diskChanged());
+        window.editor()->insertPlainText("local");
+        file("external.txt", "changed again");
+        window.externalChoice = 2;
+        QVERIFY(window.saveEditor(window.editor()));
+        QVERIFY(!window.editor()->diskChanged());
+    }
+    void indentationAndSearchOptions() {
+        Theme theme;
+        CodeEditor editor(&theme);
+        editor.setIndentation(4, true);
+        editor.insertPlainText("a");
+        QTest::keyClick(&editor, Qt::Key_Tab);
+        QCOMPARE(editor.toPlainText(), QString("a   "));
+        editor.setPlainText("One one ONE");
+        editor.moveCursor(QTextCursor::End);
+        QVERIFY(editor.findNext("one", false, true));
+        QCOMPARE(editor.textCursor().selectedText(), QString("ONE"));
+        QCOMPARE(editor.replaceAll("one", "x", false), 3);
+        QCOMPARE(editor.toPlainText(), QString("x x x"));
+        editor.undo();
+        QCOMPARE(editor.toPlainText(), QString("One one ONE"));
+    }
     void syntaxPrecedence() {
         Theme theme;
         const auto ranges = SyntaxHighlighter::formats("\"// 123 if\" // 123 if", theme);

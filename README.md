@@ -8,11 +8,11 @@ A lightweight text editor for scripts and plain-text files on [Omarchy](https://
 ## Features
 
 - **Tabbed editing** with independent undo history, cursor position, and scrolling for each document.
-- **Find and replace**, including Replace All as a single undoable action.
-- **Syntax highlighting** for common shell, Python, Lua, and JavaScript constructs.
+- **Find and replace**, with case matching, forward and backward search, and Replace All as a single undoable action.
+- **Language-aware syntax highlighting** for common script, source, and data formats, with an option to turn it off.
 - **Line numbers and optional word wrapping**, with visual guides for wrapped lines. Wrapping never changes the file contents.
 - **Live theme updates** when you switch your Omarchy theme.
-- **UTF-8 file support**, unsaved-change prompts, and desktop file-manager integration.
+- **UTF-8 file support**, unsaved-change prompts, external-change warnings, and desktop file-manager integration.
 
 ## Installation
 
@@ -52,8 +52,14 @@ Use the **Menu** button for file actions, Find and Replace, and About. Open **Se
 | `Ctrl+O` | Open files |
 | `Ctrl+S` | Save |
 | `Ctrl+F` | Find and replace |
+| `Ctrl+G` | Go to line |
+| `Ctrl+W` | Close tab |
+| `Ctrl+Shift+S` | Save As |
+| `Ctrl+Tab` / `Ctrl+Shift+Tab` | Switch tabs |
 
-Syntax highlighting is intentionally lightweight rather than a full language parser. Lines longer than 32,768 characters remain editable but skip highlighting to keep formatting work bounded.
+Settings include a syntax highlighting switch, tab width, and an option to insert spaces when pressing Tab. The status bar shows the cursor position, encoding, and line endings.
+
+Syntax highlighting uses lightweight, language-specific single-line rules rather than a full language parser; multiline strings and comments are not tracked across lines. Lines longer than 32,768 characters remain editable but skip highlighting to keep formatting work bounded.
 
 ## Development
 

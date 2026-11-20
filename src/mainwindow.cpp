@@ -13,6 +13,9 @@
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QIcon>
+#include <QInputDialog>
+#include <QSpinBox>
+#include <QEvent>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
@@ -89,6 +92,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_tabs(new QTabWi
     action(tr("Save"), QKeySequence::Save, [this] { saveEditor(editor()); });
     action(tr("Save As…"), QKeySequence::SaveAs, [this] { saveEditor(editor(), true); });
     action(tr("Close tab"), QKeySequence::Close, [this] { closeTab(m_tabs->currentIndex()); });
+    action(tr("Go to line…"), QKeySequence(Qt::CTRL | Qt::Key_G), [this] {
+        bool ok = false;
+        const int line = QInputDialog::getInt(this, tr("Go to line"), tr("Line number"), editor()->textCursor().blockNumber() + 1, 1, editor()->blockCount(), 1, &ok);
+        if (ok) { QTextCursor cursor(editor()->document()->findBlockByNumber(line - 1)); editor()->setTextCursor(cursor); editor()->setFocus(); }
+    });
     action(tr("Find and replace…"), QKeySequence::Find, [this] { showFind(); });
     action(tr("Next tab"), QKeySequence::NextChild, [this] { setCurrentIndex((m_tabs->currentIndex() + 1) % tabCount()); });
     action(tr("Previous tab"), QKeySequence::PreviousChild, [this] { setCurrentIndex((m_tabs->currentIndex() + tabCount() - 1) % tabCount()); });
@@ -147,6 +155,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), m_tabs(new QTabWi
     });
     statusBar()->addPermanentWidget(m_wrap);
     connect(&m_theme, &Theme::changed, this, &MainWindow::applyTheme);
+    connect(&m_settings, &Settings::indentationChanged, this, &MainWindow::applySettings);
     connect(&m_settings, &Settings::tabsEnabledChanged, this, &MainWindow::applySettings);
     connect(&m_settings, &Settings::syntaxEnabledChanged, this, &MainWindow::applySettings);
     connect(&m_settings, &Settings::wrappedLineSpacingChanged, this, &MainWindow::applySettings);
@@ -163,11 +172,13 @@ void MainWindow::setCurrentIndex(int index) { m_tabs->setCurrentIndex(index); }
 CodeEditor *MainWindow::createEditor() {
     auto *edit = new CodeEditor(&m_theme, m_tabs);
     edit->setSyntaxEnabled(m_settings.syntaxEnabled());
+    edit->setIndentation(m_settings.indentWidth(), m_settings.indentSpaces());
     edit->setWrapEnabled(m_wrapping);
     edit->setWrapGuides(m_settings.wrappedLineSpacing());
     connect(edit, &CodeEditor::error, this, &MainWindow::showError);
     connect(edit, &CodeEditor::fileChanged, this, [this, edit] { refreshTab(edit); });
     connect(edit, &QPlainTextEdit::modificationChanged, this, [this, edit] { refreshTab(edit); });
+    connect(edit, &QPlainTextEdit::cursorPositionChanged, this, [this, edit] { if (edit == editor()) refreshStatus(); });
     connect(edit, &QPlainTextEdit::textChanged, this, [this, edit] { if (edit == editor()) refreshStatus(); });
     return edit;
 }
@@ -224,11 +235,13 @@ bool MainWindow::saveEditorAs(CodeEditor *edit, const QUrl &url) {
             showError(tr("This file is already open in another tab.")); return false;
         }
     }
+    if (path == edit->filePath() && !checkExternalChange(edit)) return false;
     return edit->saveAs(url);
 }
 bool MainWindow::saveEditor(CodeEditor *edit, bool saveAs) {
     if (!edit) return false;
     if (saveAs || edit->filePath().isEmpty()) return saveEditorAs(edit, chooseSavePath(edit));
+    if (!checkExternalChange(edit)) return false;
     return edit->save();
 }
 QUrl MainWindow::chooseSavePath(CodeEditor *edit) {
@@ -267,6 +280,29 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     }
     event->accept();
 }
+int MainWindow::confirmExternalChange(CodeEditor *edit) {
+    QMessageBox box(QMessageBox::Warning, tr("File changed on disk"),
+        tr("%1 has changed or is no longer accessible on disk. Reload it, keep your current text, or cancel.").arg(edit->fileName()), QMessageBox::NoButton, this);
+    auto *reload = box.addButton(tr("Reload"), QMessageBox::ActionRole);
+    auto *keep = box.addButton(tr("Keep current text"), QMessageBox::ActionRole);
+    box.addButton(QMessageBox::Cancel);
+    box.exec();
+    return box.clickedButton() == reload ? 1 : box.clickedButton() == keep ? 2 : 0;
+}
+bool MainWindow::checkExternalChange(CodeEditor *edit) {
+    if (!edit || !edit->diskChanged()) return true;
+    if (m_checkingExternal) return false;
+    m_checkingExternal = true;
+    const int choice = confirmExternalChange(edit);
+    m_checkingExternal = false;
+    if (choice == 1) { edit->load(QUrl::fromLocalFile(edit->filePath())); return false; }
+    return choice == 2;
+}
+bool MainWindow::event(QEvent *event) {
+    const bool result = QMainWindow::event(event);
+    if (event->type() == QEvent::WindowActivate && !m_checkingExternal && editor()) checkExternalChange(editor());
+    return result;
+}
 void MainWindow::showError(const QString &message) { QMessageBox::warning(this, tr("Couldn’t read or write file"), message); }
 
 void MainWindow::refreshTab(CodeEditor *edit) {
@@ -281,7 +317,7 @@ void MainWindow::refreshStatus() {
     const QString path = edit->filePath().isEmpty() ? tr("Untitled") : (m_settings.tabsEnabled() ? QFileInfo(edit->filePath()).absolutePath() : edit->filePath());
     m_path->setText(path);
     m_path->setToolTip(edit->filePath());
-    m_status->setText(tr("UTF-8   %1   %2 lines · %3 chars").arg(m_settings.syntaxEnabled() ? edit->language() : QString()).arg(edit->blockCount()).arg(edit->document()->characterCount() - 1));
+    m_status->setText(tr("%1 · %2 · %3   |   Ln %4, Col %5   |   %6 lines · %7 chars").arg(edit->hasBom() ? tr("UTF-8 BOM") : tr("UTF-8"), edit->lineEnding(), edit->language()).arg(edit->textCursor().blockNumber() + 1).arg(edit->textCursor().positionInBlock() + 1).arg(edit->blockCount()).arg(edit->document()->characterCount() - 1));
 }
 void MainWindow::applyTheme() {
     QPalette p = palette();
@@ -329,6 +365,7 @@ void MainWindow::applySettings() {
     m_tabs->tabBar()->setVisible(m_settings.tabsEnabled());
     for (int i = 0; i < tabCount(); ++i) {
         editorAt(i)->setSyntaxEnabled(m_settings.syntaxEnabled());
+        editorAt(i)->setIndentation(m_settings.indentWidth(), m_settings.indentSpaces());
         editorAt(i)->setWrapGuides(m_settings.wrappedLineSpacing());
     }
     refreshStatus();
@@ -343,19 +380,32 @@ void MainWindow::showFind() {
         m_replace = new QLineEdit(m_findDialog);
         layout->addRow(tr("Find"), m_find);
         layout->addRow(tr("Replace with"), m_replace);
+        auto *caseSensitive = new QCheckBox(tr("Match case"), m_findDialog);
+        caseSensitive->setChecked(true);
+        layout->addRow(caseSensitive);
+        auto *feedback = new QLabel(m_findDialog);
+        layout->addRow(feedback);
         auto *buttons = new QDialogButtonBox(m_findDialog);
         auto *next = buttons->addButton(tr("Find next"), QDialogButtonBox::ActionRole);
+        auto *previous = buttons->addButton(tr("Find previous"), QDialogButtonBox::ActionRole);
         auto *replace = buttons->addButton(tr("Replace"), QDialogButtonBox::ActionRole);
         auto *all = buttons->addButton(tr("Replace all"), QDialogButtonBox::ActionRole);
         buttons->addButton(QDialogButtonBox::Close);
         layout->addRow(buttons);
-        connect(next, &QPushButton::clicked, this, [this] { editor()->findNext(m_find->text()); });
+        const auto find = [this, caseSensitive, feedback](bool backwards) {
+            const bool found = editor()->findNext(m_find->text(), caseSensitive->isChecked(), backwards);
+            feedback->setText(found ? QString() : tr("No matches"));
+        };
+        connect(next, &QPushButton::clicked, this, [find] { find(false); });
+        connect(previous, &QPushButton::clicked, this, [find] { find(true); });
+        connect(m_find, &QLineEdit::textChanged, feedback, &QLabel::clear);
         connect(m_find, &QLineEdit::returnPressed, next, &QPushButton::click);
-        connect(replace, &QPushButton::clicked, this, [this] {
-            if (!editor()->replaceCurrent(m_find->text(), m_replace->text())) editor()->findNext(m_find->text());
+        connect(replace, &QPushButton::clicked, this, [this, caseSensitive, feedback, find] {
+            if (!editor()->replaceCurrent(m_find->text(), m_replace->text(), caseSensitive->isChecked())) find(false);
+            else feedback->clear();
         });
         connect(m_replace, &QLineEdit::returnPressed, replace, &QPushButton::click);
-        connect(all, &QPushButton::clicked, this, [this] { editor()->replaceAll(m_find->text(), m_replace->text()); });
+        connect(all, &QPushButton::clicked, this, [this, caseSensitive, feedback] { const int count = editor()->replaceAll(m_find->text(), m_replace->text(), caseSensitive->isChecked()); feedback->setText(tr("%1 replacements").arg(count)); });
         connect(buttons, &QDialogButtonBox::rejected, m_findDialog, &QDialog::hide);
     }
     m_findDialog->show();
@@ -375,6 +425,16 @@ void MainWindow::showSettings() {
     };
     connect(checkbox(tr("Show tabs"), m_settings.tabsEnabled()), &QCheckBox::toggled, &m_settings, &Settings::setTabsEnabled);
     connect(checkbox(tr("Syntax highlighting"), m_settings.syntaxEnabled()), &QCheckBox::toggled, &m_settings, &Settings::setSyntaxEnabled);
+    connect(checkbox(tr("Insert spaces instead of tabs"), m_settings.indentSpaces()), &QCheckBox::toggled, &m_settings, &Settings::setIndentSpaces);
+    auto *indentRow = new QHBoxLayout;
+    indentRow->addWidget(new QLabel(tr("Tab width"), &dialog));
+    auto *indentWidth = new QSpinBox(&dialog);
+    indentWidth->setRange(1, 16);
+    indentWidth->setValue(m_settings.indentWidth());
+    connect(indentWidth, &QSpinBox::valueChanged, &m_settings, &Settings::setIndentWidth);
+    indentRow->addWidget(indentWidth);
+    indentRow->addStretch();
+    layout->addLayout(indentRow);
     connect(checkbox(tr("Mark wrapped continuation lines"), m_settings.wrappedLineSpacing()), &QCheckBox::toggled, &m_settings, &Settings::setWrappedLineSpacing);
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close, &dialog);
     connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);

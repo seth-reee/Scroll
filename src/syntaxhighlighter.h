@@ -4,5 +4,5 @@ class Theme;
 // Stateless single-line coloring, requested only for visible blocks.
 class SyntaxHighlighter {
 public:
-    static QList<QTextLayout::FormatRange> formats(const QString &text, const Theme &theme);
+    static QList<QTextLayout::FormatRange> formats(const QString &text, const Theme &theme, const QString &language = QStringLiteral("JavaScript"));
 };
