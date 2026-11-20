@@ -167,7 +167,7 @@ Scroll uses its built-in colors if no Omarchy theme is present.
 CI publishes Nix artifacts for branch builds and adds Nix release assets on version tags.
 The existing manual Arch packaging flow is unchanged.
 
-CI builds both architectures on native runners. Download the matching
+CI builds and tests Arch and Nix packages for both architectures on native runners. Branch builds are available as workflow artifacts; pushing a matching version tag publishes the packages to GitHub Releases. Download the matching
 `scroll-VERSION-nix-SYSTEM.nar.xz`, `.store-path`, and `SHA256SUMS-nix-SYSTEM`
 files from a release (replace VERSION and SYSTEM), then import and install:
 
